@@ -15,8 +15,8 @@
 #include <signal.h>
 
 #define INOTIFY_EVENT_INC sizeof(struct inotify_event) + event->len
-#define WATCHDOG_FORMAT "[%s] %c '%s' (%s)\n" // [<timestamp>] <event> '<path>' (<filetype>)
-#define WATCHDOG_FORMAT_NOTS "%c '%s' (%s)\n" // <event> '<path>' (<filetype>)
+#define WATCHDOG_FORMAT "[%s] %c '%s' (%s)\n"
+#define WATCHDOG_FORMAT_NOTS "%c '%s' (%s)\n"
 #define FILE_FMT "%s/%s"
 #define DIR_FMT "%s"
 
@@ -54,16 +54,16 @@ void helper(const char *name) {
            "--no-timestamp            | Disable timestamp from watchdog output\n"
            "-v, --version             | Show program version\n"
            "-h, --help                | Show this helper\n\n"
-           "General help with the software: https://github.com/ceticamarco/wolf\n"
+           "General help with the software: https://git.marcocetica.com/marco/wolf\n"
            "Report bugs to: Marco Cetica(<email@marcocetica.com>)\n", name);
 }
 
 void version() {
-    printf("Wolf (v%s, %s) - Configurable file watchdog for Linux platform.\n"
+    printf("Wolf (v%s) - Configurable file watchdog for Linux platform.\n"
            "Copyright (c) 2024 Marco Cetica\n"
            "License GPLv3+: GNU GPL version 3 or later\n\n"
            "Project homepage: <https://git.marcocetica.com/marco/wolf>.\n"
-           "Email bug reports to: <email@marcocetica.com>.\n", VERSION, HASH);
+           "Email bug reports to: <email@marcocetica.com>.\n", VERSION);
 }
 
 int main(int argc, char **argv) {
