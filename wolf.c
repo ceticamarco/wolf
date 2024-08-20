@@ -1,3 +1,5 @@
+#define _GNU_SOURCE
+
 #ifndef __linux__
     #error "Unsupported platform"
 #endif
@@ -11,6 +13,8 @@
 #include <poll.h>
 #include <time.h>
 #include <sys/inotify.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <stdint.h>
 #include <signal.h>
 
@@ -32,8 +36,10 @@ typedef enum {
 
 typedef enum { false, true } bool;
 
-static void handle_inotify_events(int fd, const int *wd, int wd_len, char **watched_files, const bool is_timestamp_enabled);
+static void handle_inotify_events(int fd, const int *wd, int wd_len, char **watched_files, const bool is_timestamp_enabled, const char *watchdog_cmd);
 static void get_timestamp(uint8_t *timestamp, const ssize_t timestamp_len);
+static void exec_command(const char *cmd);
+static uint8_t **tokenize_command(const char *cmd);
 
 volatile sig_atomic_t stop_signal = 0;
 void sigint_handler() {
@@ -51,6 +57,7 @@ void helper(const char *name) {
            "-w, --write               | Add a watchdog for writing events\n"
            "-p, --permission          | Add a watchdog for permissions changes\n"
            "-f, --full                | Enable all the previous options\n"
+           "-e, --exec                | Execute a command when a watchdog detects a change\n"
            "--no-timestamp            | Disable timestamp from watchdog output\n"
            "-v, --version             | Show program version\n"
            "-h, --help                | Show this helper\n\n"
@@ -68,7 +75,8 @@ void version() {
 
 int main(int argc, char **argv) {
     int opt, opt_idx = 0;
-    const char *short_opts = "cdmrwpfvh";
+    const char *short_opts = "cdmrwpfvhe:";
+    char *watchdog_cmd = NULL;
     uint32_t mask = 0;
     bool is_timestamp_enabled = true;
     struct option long_opts[] = {
@@ -79,6 +87,7 @@ int main(int argc, char **argv) {
         {"write",          no_argument, NULL, 'w'},
         {"permission",     no_argument, NULL, 'p'},
         {"full",           no_argument, NULL, 'f'},
+        {"exec",           required_argument, NULL, 'e'},
         {"no-timestamp",   no_argument, NULL,  0 },
         {"version",        no_argument, NULL, 'v'},
         {"help",           no_argument, NULL, 'h'},
@@ -96,6 +105,7 @@ int main(int argc, char **argv) {
             case 'p': mask |= IN_ATTRIB; break;
             case 'f': mask = IN_CREATE | IN_DELETE | IN_DELETE_SELF | IN_MOVED_FROM |
                              IN_ACCESS | IN_MODIFY | IN_ATTRIB; break;
+            case 'e': watchdog_cmd = optarg; break;
             case 0:
                 if(!strcmp(long_opts[opt_idx].name, "no-timestamp")) {
                     is_timestamp_enabled = false;
@@ -171,7 +181,9 @@ int main(int argc, char **argv) {
         if(poll_num > 0) {
             // Inotify events are available
             if(fds->revents & POLLIN) {
-                handle_inotify_events(fd, wd, number_of_files, (argv + optind), is_timestamp_enabled);
+                handle_inotify_events(fd, wd, number_of_files, (argv + optind), is_timestamp_enabled, watchdog_cmd);
+
+
             }
         }
     }
@@ -183,7 +195,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-static void handle_inotify_events(int fd, const int *wd, int wd_len, char **watched_files, const bool is_timestamp_enabled) {
+static void handle_inotify_events(int fd, const int *wd, int wd_len, char **watched_files, const bool is_timestamp_enabled, const char *watchdog_cmd) {
     // Align inotify reading buffer to inotify_event struct
     char inotify_read_buf[4096]
         __attribute__((aligned((__alignof__(struct inotify_event)))));
@@ -270,6 +282,11 @@ static void handle_inotify_events(int fd, const int *wd, int wd_len, char **watc
                     break;
                 }
             }
+            // If user supplied a command, execute it
+            if(watchdog_cmd != NULL) {
+                exec_command(watchdog_cmd);
+            }
+
             free(file_name);
         }
         memset(inotify_read_buf, 0, sizeof(inotify_read_buf));
@@ -280,4 +297,89 @@ static void get_timestamp(uint8_t *timestamp, const ssize_t timestamp_len) {
     time_t now = time(NULL);
     struct tm *timeinfo = localtime(&now);
     strftime((char*)timestamp, timestamp_len, "%Y-%m-%d %H:%M:%S", timeinfo);
+}
+
+static void exec_command(const char *cmd) {
+    // Ignore SIGCHLD signals.
+    // This allows us to avoid blocking the parent process until the child completes
+    // its execution; furthermore, it allows us to prevent the creation of zombie processes
+    // by delegating the cleanup process to the kernel. By doing so, we lose the ability 
+    // to check the return status of the child process.
+    signal(SIGCHLD, SIG_IGN);
+
+    // Execute command in a new process
+    pid_t pid = fork();
+    
+    if(pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if(pid == 0) { // Child process
+        // Tokenize command
+        uint8_t **argv = tokenize_command(cmd);
+
+        // Replace memory of child process with new program
+        execvp((char*)argv[0], (char**)argv);
+
+        // If execvp returns, it means it has failed
+        switch(errno) {
+            case ENOENT: puts("Cannot execute command: no such file or directory"); break;
+            case EACCES: puts("Cannot execute command: permission denied"); break;
+            default: puts("Cannot execute command"); break;
+        }
+
+        // Free allocated resources
+        for (int i = 0; argv[i] != NULL; i++) {
+            free(argv[i]);
+        }
+        free(argv);
+        exit(EXIT_FAILURE);
+    }
+}
+
+static uint8_t **tokenize_command(const char *cmd) {
+    // Duplicate command
+    char *cmd_dup = strdup(cmd);
+    if(cmd_dup == NULL) {
+        perror("strdup");
+        exit(EXIT_FAILURE);
+    }
+
+    // Count number of arguments
+    size_t argc = 0;
+    char *token = strtok(cmd_dup, " ");
+    while(token != NULL) {
+        argc++;
+        token = strtok(NULL, " ");
+    }
+
+    // Allocate enough memory for arguments(and null terminator)
+    uint8_t **argv = malloc((argc + 1) * sizeof(uint8_t*));
+    if(argv == NULL) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+    }
+
+    // Reset command string and tokenize again
+    strcpy(cmd_dup, cmd);
+    size_t idx = 0;
+    token = strtok(cmd_dup, " ");
+    while(token != NULL) {
+        argv[idx] = (uint8_t*)strdup(token);
+        if(argv[idx] == NULL) {
+            perror("strdup");
+            while(idx > 0) { free(argv[--idx]); }
+            free(argv);
+            free(cmd_dup);
+            exit(EXIT_FAILURE);
+        }
+        idx++;
+        token = strtok(NULL, " ");
+    }
+
+    // Null-terminate the string
+    argv[idx] = NULL;
+    // Clear temporary resources
+    free(cmd_dup);
+
+    return argv;
 }
