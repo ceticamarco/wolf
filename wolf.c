@@ -48,7 +48,7 @@ void sigint_handler() {
 
 void helper(const char *name) {
     printf("Wolf - Configurable file watchdog for Linux platform.\n\n"
-           "Syntax: '%s [-c|-d|-m|-r|-w|-p|-f] <PATH ...>'\n"
+           "Syntax: '%s [-c|-d|-m|-r|-w|-p|-f|-e] <PATH ...>'\n"
            "options:\n"
            "-c, --create              | Add a watchdog for file creation\n"
            "-d, --delete              | Add a watchdog for file deletion\n"
@@ -376,7 +376,7 @@ static uint8_t **tokenize_command(const char *cmd) {
         token = strtok(NULL, " ");
     }
 
-    // Null-terminate the string
+    // Null-terminate argv, this is required by execvp
     argv[idx] = NULL;
     // Clear temporary resources
     free(cmd_dup);
