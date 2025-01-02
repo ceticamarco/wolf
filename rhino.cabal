@@ -1,0 +1,27 @@
+cabal-version:      3.0
+name:               rhino
+version:            0.1.0.0
+synopsis:           Markup language for building static websites
+-- description:
+homepage:           https://github.com/ceticamarco/rhino
+license:            MIT
+license-file:       LICENSE
+author:             Marco Cetica
+maintainer:         email@marcocetica.com
+-- copyright:
+category:           System
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+-- extra-source-files:
+
+common warnings
+    ghc-options: -Wall -Wextra -Werror
+
+executable rhino
+    import:           warnings
+    main-is:          Main.hs
+    build-depends:      base ^>=4.17.2.1
+                      , parsec
+                      , optparse-applicative
+    hs-source-dirs:   app
+    default-language: Haskell2010
