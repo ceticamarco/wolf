@@ -20,8 +20,11 @@ common warnings
 executable rhino
     import:           warnings
     main-is:          Main.hs
+    other-modules:    Engine Args
     build-depends:      base ^>=4.17.2.1
                       , parsec
                       , optparse-applicative
+                      , directory
+                      , filepath
     hs-source-dirs:   app
     default-language: Haskell2010

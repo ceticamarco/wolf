@@ -1,13 +1,8 @@
 module Main where
 
+import Args (Args(..))
 import Options.Applicative
-
-data Args = Args
-  { srcDir    :: String
-  , outputDir :: String
-  , template  :: String
-  , verbose   :: Bool
-  }
+import Engine (checkPaths, convertSrcFiles)
 
 argsParser :: Parser Args
 argsParser = Args
@@ -25,16 +20,25 @@ argsParser = Args
       ( long "template"
      <> short 't'
      <> metavar "TEMPLATE"
-     <> help "Specify template file")
+     <> help "Specify template file" )
   <*> switch
       ( long "verbose"
      <> short 'v'
-     <> help "Enable verbose mode")
+     <> help "Enable verbose mode" )
 
 main :: IO ()
 main = do
   args <- execParser opts
-  -- TODO: do something with CLI arguments store into 'args'
+  -- Check whether directories and template exist
+  validatePaths <- checkPaths args
+  case validatePaths of
+    Just err -> putStrLn err
+    Nothing  -> return ()
+  -- Convert source files in the source directory to HTML pages
+  conversionErr <- convertSrcFiles args
+  case conversionErr of
+    Just err -> putStrLn err
+    Nothing  -> return ()
   where
     opts = info (argsParser <**> helper)
       ( fullDesc
