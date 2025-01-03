@@ -1,8 +1,8 @@
 module Main where
 
-import Args (Args(..))
+import Types (Args(..))
 import Options.Applicative
-import Engine (checkPaths, convertSrcFiles)
+import Engine (checkPaths, convertFiles)
 
 argsParser :: Parser Args
 argsParser = Args
@@ -35,10 +35,7 @@ main = do
     Just err -> putStrLn err
     Nothing  -> return ()
   -- Convert source files in the source directory to HTML pages
-  conversionErr <- convertSrcFiles args
-  case conversionErr of
-    Just err -> putStrLn err
-    Nothing  -> return ()
+  convertFiles args
   where
     opts = info (argsParser <**> helper)
       ( fullDesc

@@ -1,4 +1,4 @@
-module Args (Args(..)) where
+module Types (Args(..)) where
 
 data Args = Args
   { srcDir    :: String
