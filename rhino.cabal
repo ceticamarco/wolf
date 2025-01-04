@@ -28,5 +28,6 @@ executable rhino
                       , filepath
                       , text
                       , containers
+                      , time
     hs-source-dirs:   app
     default-language: Haskell2010

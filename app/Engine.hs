@@ -1,7 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Engine where
 
 import Types (Args(..))
 import System.Directory (doesDirectoryExist, doesFileExist, createDirectoryIfMissing, listDirectory)
+import Data.Time (getCurrentTime, formatTime, defaultTimeLocale)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -30,20 +33,30 @@ getDirContent dir = map (dir </>) <$> listDirectory dir
 
 processLine :: Text -> Maybe (Text, Text)
 processLine line = do
-  strippedLine <- T.stripPrefix (T.pack "#+") line
-  let (key, rest) = T.breakOn (T.pack ":") strippedLine
-  value <- T.stripPrefix (T.pack ":") rest
+  strippedLine <- T.stripPrefix "#+" line
+  let (key, rest) = T.breakOn ":" strippedLine
+  value <- T.stripPrefix ":" rest
   return (T.strip key, T.strip value)
 
-getFileMetadata :: FilePath -> IO ()
+getFileMetadata :: FilePath -> IO [(Text, Text)]
 getFileMetadata srcFile = do
   content <- TIO.readFile srcFile
   let header = take 5 $ T.lines content
   let metadata = map (fromMaybe (T.empty, T.empty) . processLine) header
-  print metadata
+  return metadata
+
+getTimestamp :: IO String
+getTimestamp = formatTime defaultTimeLocale "%Y-%m-%dT%H:%M:%S" <$> getCurrentTime
+
+fillMetadata :: T.Text -> [(Text, Text)] -> T.Text
+fillMetadata content [] = content
+fillMetadata content ((placeholder, value):xs) =
+    fillMetadata (T.replace expr value content) xs
+  where
+    expr = "%%" <> placeholder <> "%%"
                         
-convertFile :: Bool -> FilePath -> FilePath -> IO ()
-convertFile is_verbose outputDir srcFile = do
+convertFile :: Bool -> FilePath -> FilePath -> FilePath -> IO ()
+convertFile is_verbose outputDir tplFile srcFile = do
   -- Print a status message
   when is_verbose $ putStrLn $ "Publishing " ++ srcFile ++ "..."
   -- Create post folder in '<OUTPUT_DIR>/<POST_DIRNAME>/index.html'
@@ -54,13 +67,46 @@ convertFile is_verbose outputDir srcFile = do
                     else outputDir </> "index.html"    
   when (postDirName /= "index") $ createDirectoryIfMissing True (outputDir </> postDirName)
 
+  -- Read source file and template
+  srcFileContent <- TIO.readFile srcFile
+  tplFileContent <- TIO.readFile tplFile
+
+  -- TODO: call language parser on post content
+  -- let convertedFile = parser srcFileContent 
+
   -- Retrieve post metadata
-  getFileMetadata srcFile
-  print outputFile
+  metadata <- getFileMetadata srcFile
+
+  -- Remove metadata from source file(i.e., first 5 lines)
+  let wholeFile = T.lines srcFileContent -- TODO: change to 'convertedFile'
+      postContent = T.unlines $ drop 5 wholeFile
+
+  -- Double escape backslash characters
+  let escPostContent = T.replace "\\" "\\\\" postContent
+
+  -- Replace page content into template file
+  let templateWithContent = T.replace "%%CONTENT%%" escPostContent tplFileContent
+
+  -- Replace metadata placeholders with actual values
+  let postWithMetadata = fillMetadata templateWithContent metadata
+
+  -- Add timestamp and build information
+  timestamp <- getTimestamp
+  let finalPost = T.replace "%%TIMESTAMP%%" (T.pack info) postWithMetadata
+       where info = "\t<!--\n\tGenerated with Rhino Template Engine\n"
+                 <> "\tDeveloped by Marco Cetica\n"
+                 <> "\tTimestamp: " <> timestamp <> "-->"
+
+  -- Write converted post to the output file
+  TIO.writeFile outputFile finalPost
 
 convertFiles :: Args -> IO ()
 convertFiles args = do
   -- Retrieve all files in the source directory
   fileList <- getDirContent $ srcDir args
   -- Convert all source files in the source directory
-  mapM_ (convertFile (verbose args) (outDir args)) fileList
+  mapM_ (convertFile v o t) fileList
+  where
+    v = verbose args
+    o = outDir args
+    t = template args

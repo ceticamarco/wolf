@@ -2,6 +2,7 @@ module Main where
 
 import Types (Args(..))
 import Options.Applicative
+import System.Exit (exitFailure)
 import Engine (checkPaths, convertFiles)
 
 argsParser :: Parser Args
@@ -30,10 +31,7 @@ main :: IO ()
 main = do
   args <- execParser opts
   -- Check whether directories and template exist
-  validatePaths <- checkPaths args
-  case validatePaths of
-    Just err -> putStrLn err
-    Nothing  -> return ()
+  checkPaths args >>= maybe (return ()) (\e -> putStrLn e >> exitFailure)
   -- Convert source files in the source directory to HTML pages
   convertFiles args
   where

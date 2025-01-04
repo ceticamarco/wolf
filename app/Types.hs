@@ -1,8 +1,8 @@
 module Types (Args(..)) where
 
 data Args = Args
-  { srcDir    :: String
-  , outDir :: String
-  , template  :: String
-  , verbose   :: Bool
+  { srcDir    :: !FilePath
+  , outDir    :: !FilePath
+  , template  :: !FilePath
+  , verbose   :: !Bool
   } deriving(Show, Eq)
