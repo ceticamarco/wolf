@@ -3,12 +3,14 @@
 module Engine where
 
 import Types (Args(..))
+import Parser (converter)
 import System.Directory (doesDirectoryExist, doesFileExist, createDirectoryIfMissing, listDirectory)
 import Data.Time (getCurrentTime, formatTime, defaultTimeLocale)
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Data.Maybe (fromMaybe)
+import Data.Either (fromRight)
 import System.FilePath ((</>), takeBaseName)
 import Control.Monad (unless, when)
 
@@ -71,14 +73,14 @@ convertFile is_verbose outputDir tplFile srcFile = do
   srcFileContent <- TIO.readFile srcFile
   tplFileContent <- TIO.readFile tplFile
 
-  -- TODO: call language parser on post content
-  -- let convertedFile = parser srcFileContent 
+  -- Convert custom language to HTML (TODO: PROPAGATE ERRORS TO MAIN)
+  let convertedFile = fromRight "" (converter srcFileContent)
 
   -- Retrieve post metadata
   metadata <- getFileMetadata srcFile
 
   -- Remove metadata from source file(i.e., first 5 lines)
-  let wholeFile = T.lines srcFileContent -- TODO: change to 'convertedFile'
+  let wholeFile = T.lines convertedFile
       postContent = T.unlines $ drop 5 wholeFile
 
   -- Double escape backslash characters

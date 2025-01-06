@@ -20,7 +20,7 @@ common warnings
 executable rhino
     import:           warnings
     main-is:          Main.hs
-    other-modules:    Engine Types
+    other-modules:    Engine Types Parser
     build-depends:      base ^>=4.17.2.1
                       , parsec
                       , optparse-applicative
@@ -29,5 +29,6 @@ executable rhino
                       , text
                       , containers
                       , time
+                      , megaparsec
     hs-source-dirs:   app
     default-language: Haskell2010
