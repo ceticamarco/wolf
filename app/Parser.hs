@@ -11,6 +11,7 @@ import Types (Element(..))
 type Parser = Parsec Void Text
 type ParserError = ParseErrorBundle Text Void
 
+-- Bold text is defined as '%*Bold text%'
 boldParser :: Parser Element
 boldParser = do
   _    <- startToken
@@ -22,6 +23,7 @@ boldParser = do
     nonToken   = noneOf ['%']
     endToken   = string "%"
 
+-- Italic text is defined as '%_Italic text%'
 italicParser :: Parser Element
 italicParser = do
   _    <- startToken
@@ -33,6 +35,7 @@ italicParser = do
     nonToken   = noneOf ['%']
     endToken   = string "%"
 
+-- Links are defined as '%[link text](url)%
 linkParser :: Parser Element
 linkParser = do
   _    <- startToken
@@ -46,6 +49,7 @@ linkParser = do
     linkTextParser = between (char '[') (char ']') (some (noneOf [']']))
     urlParser      = between (char '(') (char ')') (some (noneOf [')']))
 
+-- Images are defined as '%![alt text](url)%'
 picParser :: Parser Element
 picParser = do
   _    <- startToken
@@ -59,6 +63,7 @@ picParser = do
     altTextParser = between (char '[') (char ']') (some (noneOf [']']))
     urlParser     = between (char '(') (char ')') (some (noneOf [')']))
 
+-- Headers are defined as '%#Header title%'
 headParser :: Parser Element
 headParser = do
   _    <- startToken
@@ -70,6 +75,7 @@ headParser = do
     nonToken   = noneOf ['%']
     endToken   = string "%"
 
+-- Inline code is defined as '%Icode snippet%''
 icodeParser :: Parser Element
 icodeParser = do
   _    <- startToken
@@ -81,6 +87,7 @@ icodeParser = do
     nonToken   = noneOf ['%']
     endToken   = string "%"
 
+-- Codeblocks are defined as '%B<SYNTAX> code snippetB%'
 cbParser :: Parser Element
 cbParser = do
   _       <- startToken
@@ -93,6 +100,7 @@ cbParser = do
     bodyParser     = manyTill anySingle endToken
     endToken       = string "B%"
 
+-- Citations are defined as '%C citationC%'
 citParser :: Parser Element
 citParser = do
   _   <- startToken
@@ -103,6 +111,7 @@ citParser = do
     bodyParser = manyTill anySingle endToken
     endToken   = string "C%"
 
+-- Links to footnotes are defined as '%>NUM%'
 linkRefParser :: Parser Element
 linkRefParser = do
   _      <- startToken
@@ -113,6 +122,7 @@ linkRefParser = do
     startToken = string "%>"
     endToken   = string "%"
 
+-- Footnotes are defined as '%<NUM FOOTNOTE%'
 refParser :: Parser Element
 refParser = do
   _      <- startToken
@@ -125,10 +135,17 @@ refParser = do
     nonToken   = noneOf ['%']
     endToken   = string "%"
 
+-- Parses any non token
 textParser :: Parser Element
 textParser = do
   text <- some (noneOf ['%'])
   return $ Text $ T.pack text
+
+-- Failback parser for syntax erorrs
+failParser :: Parser Element
+failParser = do
+  _ <- anySingle
+  fail "Unexpected token"
 
 elementParser :: Parser [Element]
 elementParser = many $ try boldParser
@@ -142,6 +159,7 @@ elementParser = many $ try boldParser
                 <|> try linkRefParser
                 <|> try refParser
                 <|> try textParser
+                <|> failParser
 
 emitHtml :: Element -> Text
 emitHtml (Bold text) = "<b>" <> text <> "</b>"

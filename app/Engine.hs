@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-
 module Engine where
 
 import Types (Args(..))
@@ -7,10 +6,10 @@ import Parser (converter)
 import System.Directory (doesDirectoryExist, doesFileExist, createDirectoryIfMissing, listDirectory)
 import Data.Time (getCurrentTime, formatTime, defaultTimeLocale)
 import Data.Text (Text)
+import Text.Megaparsec (errorBundlePretty)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Data.Maybe (fromMaybe)
-import Data.Either (fromRight)
+import Data.Maybe (fromMaybe, catMaybes, listToMaybe)
 import System.FilePath ((</>), takeBaseName)
 import Control.Monad (unless, when)
 
@@ -57,7 +56,7 @@ fillMetadata content ((placeholder, value):xs) =
   where
     expr = "%%" <> placeholder <> "%%"
                         
-convertFile :: Bool -> FilePath -> FilePath -> FilePath -> IO ()
+convertFile :: Bool -> FilePath -> FilePath -> FilePath -> IO (Maybe String)
 convertFile is_verbose outputDir tplFile srcFile = do
   -- Print a status message
   when is_verbose $ putStrLn $ "Publishing " ++ srcFile ++ "..."
@@ -73,41 +72,47 @@ convertFile is_verbose outputDir tplFile srcFile = do
   srcFileContent <- TIO.readFile srcFile
   tplFileContent <- TIO.readFile tplFile
 
-  -- Convert custom language to HTML (TODO: PROPAGATE ERRORS TO MAIN)
-  let convertedFile = fromRight "" (converter srcFileContent)
+  -- Convert file to HTML
+  case converter srcFileContent of
+    Left err -> return $ Just $ "Error processing file '" <> srcFile <> "' @ " <> errorBundlePretty err
+    Right convertedFile -> do
+      -- Retrieve post metadata
+      metadata <- getFileMetadata srcFile
 
-  -- Retrieve post metadata
-  metadata <- getFileMetadata srcFile
+      -- Remove metadata from source file(i.e., first 5 lines)
+      let wholeFile = T.lines convertedFile
+          postContent = T.unlines $ drop 5 wholeFile
 
-  -- Remove metadata from source file(i.e., first 5 lines)
-  let wholeFile = T.lines convertedFile
-      postContent = T.unlines $ drop 5 wholeFile
+      -- Double escape backslash characters
+      let escPostContent = T.replace "\\" "\\\\" postContent
 
-  -- Double escape backslash characters
-  let escPostContent = T.replace "\\" "\\\\" postContent
+      -- Replace page content into template file
+      let templateWithContent = T.replace "%%CONTENT%%" escPostContent tplFileContent
 
-  -- Replace page content into template file
-  let templateWithContent = T.replace "%%CONTENT%%" escPostContent tplFileContent
+      -- Replace metadata placeholders with actual values
+      let postWithMetadata = fillMetadata templateWithContent metadata
 
-  -- Replace metadata placeholders with actual values
-  let postWithMetadata = fillMetadata templateWithContent metadata
+      -- Add timestamp and build information
+      timestamp <- getTimestamp
+      let info = "\t<!--\n\tGenerated with Rhino Template Engine\n"
+              <> "\tDeveloped by Marco Cetica\n"
+              <> "\tTimestamp: " <> timestamp <> "-->"
+          finalPost = T.replace "%%TIMESTAMP%%" (T.pack info) postWithMetadata
+          
+      -- Write converted post to the output file
+      TIO.writeFile outputFile finalPost
+      return Nothing
 
-  -- Add timestamp and build information
-  timestamp <- getTimestamp
-  let finalPost = T.replace "%%TIMESTAMP%%" (T.pack info) postWithMetadata
-       where info = "\t<!--\n\tGenerated with Rhino Template Engine\n"
-                 <> "\tDeveloped by Marco Cetica\n"
-                 <> "\tTimestamp: " <> timestamp <> "-->"
-
-  -- Write converted post to the output file
-  TIO.writeFile outputFile finalPost
-
-convertFiles :: Args -> IO ()
+convertFiles :: Args -> IO (Maybe String)
 convertFiles args = do
   -- Retrieve all files in the source directory
   fileList <- getDirContent $ srcDir args
   -- Convert all source files in the source directory
-  mapM_ (convertFile v o t) fileList
+  res <- mapM (convertFile v o t) fileList
+  let errors = catMaybes res
+  if null errors
+    then return Nothing
+    else return $ listToMaybe errors
   where
     v = verbose args
     o = outDir args

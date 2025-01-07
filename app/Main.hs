@@ -33,7 +33,7 @@ main = do
   -- Check whether directories and template exist
   checkPaths args >>= maybe (return ()) (\e -> putStrLn e >> exitFailure)
   -- Convert source files in the source directory to HTML pages
-  convertFiles args
+  convertFiles args >>= maybe (return ()) (\e -> putStrLn e >> exitFailure)
   where
     opts = info (argsParser <**> helper)
       ( fullDesc

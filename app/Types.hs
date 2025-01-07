@@ -8,11 +8,10 @@ data Args = Args
   , outDir    :: FilePath
   , template  :: FilePath
   , verbose   :: Bool
-  } deriving(Show, Eq)
+  }
 
 
 type Value = Text
-
 data Element = Bold Value
              | Italic Value
              | Link Value Value
@@ -24,4 +23,3 @@ data Element = Bold Value
              | LRef Char
              | Ref Char Text
              | Text Value
-             deriving (Show)
