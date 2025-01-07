@@ -21,5 +21,7 @@ data Element = Bold Value
              | ICode Value
              | CBlock Value Value
              | Citation Value
+             | LRef Char
+             | Ref Char Text
              | Text Value
              deriving (Show)

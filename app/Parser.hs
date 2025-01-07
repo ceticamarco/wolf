@@ -103,6 +103,28 @@ citParser = do
     bodyParser = manyTill anySingle endToken
     endToken   = string "C%"
 
+linkRefParser :: Parser Element
+linkRefParser = do
+  _      <- startToken
+  refNum <- digitChar
+  _      <- endToken
+  return $ LRef refNum
+  where
+    startToken = string "%>"
+    endToken   = string "%"
+
+refParser :: Parser Element
+refParser = do
+  _      <- startToken
+  refNum <- digitChar
+  ref    <- some nonToken
+  _      <- endToken
+  return $ Ref refNum (T.pack ref)
+  where
+    startToken = string "%<"
+    nonToken   = noneOf ['%']
+    endToken   = string "%"
+
 textParser :: Parser Element
 textParser = do
   text <- some (noneOf ['%'])
@@ -117,6 +139,8 @@ elementParser = many $ try boldParser
                 <|> try icodeParser
                 <|> try cbParser
                 <|> try citParser
+                <|> try linkRefParser
+                <|> try refParser
                 <|> try textParser
 
 emitHtml :: Element -> Text
@@ -128,6 +152,8 @@ emitHtml (Header text) = "<h2>" <> text <> "</h2>"
 emitHtml (ICode text) = "<code>" <> text <> "</code>"
 emitHtml (CBlock lang content) = "<pre>\n<code class=\"language-" <> lang <> "\">\n" <> content <> "</code></pre>"
 emitHtml (Citation cit) = "<blockquote>\n<div>></div>\n" <> cit <> "</blockquote>"
+emitHtml (LRef num) = "<a id=\"ref-" <> T.singleton num <> "\" href=\"#foot-" <> T.singleton  num <> "\">[" <> T.singleton num <> "]</a>"
+emitHtml (Ref num ref) = "<p id=\"foot-" <> T.singleton num <> "\">[" <> T.singleton num <> "]: " <> ref <> " <a href=\"#ref-" <> T.singleton num <> "\">&#8617;</a></p>"
 emitHtml (Text text) = text
 
 converter :: Text -> Either ParserError Text
