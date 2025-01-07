@@ -12,14 +12,16 @@ data Args = Args
 
 
 type Value = Text
-data Element = Bold Value
-             | Italic Value
-             | Link Value Value
+data Element = Bold [Element]
+             | Italic [Element]
+             | Link [Element] Value
              | Picture Value Value
-             | Header Value
+             | Header [Element]
              | ICode Value
              | CBlock Value Value
              | Citation Value
              | LRef Char
-             | Ref Char Text
+             | Ref Char [Element]
+             | IMathExpr Value
+             | MathExpr Value
              | Text Value

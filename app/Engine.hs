@@ -74,7 +74,8 @@ convertFile is_verbose outputDir tplFile srcFile = do
 
   -- Convert file to HTML
   case converter srcFileContent of
-    Left err -> return $ Just $ "Error processing file '" <> srcFile <> "' @ " <> errorBundlePretty err
+    Left err -> return $ Just $ "Error processing file '"
+                <> srcFile <> "' @ " <> errorBundlePretty err
     Right convertedFile -> do
       -- Retrieve post metadata
       metadata <- getFileMetadata srcFile
@@ -83,11 +84,8 @@ convertFile is_verbose outputDir tplFile srcFile = do
       let wholeFile = T.lines convertedFile
           postContent = T.unlines $ drop 5 wholeFile
 
-      -- Double escape backslash characters
-      let escPostContent = T.replace "\\" "\\\\" postContent
-
       -- Replace page content into template file
-      let templateWithContent = T.replace "%%CONTENT%%" escPostContent tplFileContent
+      let templateWithContent = T.replace "%%CONTENT%%" postContent tplFileContent
 
       -- Replace metadata placeholders with actual values
       let postWithMetadata = fillMetadata templateWithContent metadata

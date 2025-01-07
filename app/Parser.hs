@@ -15,24 +15,22 @@ type ParserError = ParseErrorBundle Text Void
 boldParser :: Parser Element
 boldParser = do
   _    <- startToken
-  text <- some nonToken
+  text <- many (try nestedElementParser)
   _    <- endToken
-  return $ Bold $ T.pack text
+  return $ Bold text
   where
     startToken = string "%*"
-    nonToken   = noneOf ['%']
     endToken   = string "%"
 
 -- Italic text is defined as '%_Italic text%'
 italicParser :: Parser Element
 italicParser = do
   _    <- startToken
-  text <- some nonToken
+  text <- many (try nestedElementParser)
   _    <- endToken
-  return $ Italic $ T.pack text
+  return $ Italic text
   where
     startToken = string "%_"
-    nonToken   = noneOf ['%']
     endToken   = string "%"
 
 -- Links are defined as '%[link text](url)%
@@ -42,11 +40,11 @@ linkParser = do
   text <- linkTextParser
   link <- urlParser
   _    <- endToken
-  return $ Link (T.pack text) (T.pack link)
+  return $ Link text (T.pack link)
   where
     startToken     = "%"
     endToken       = startToken
-    linkTextParser = between (char '[') (char ']') (some (noneOf [']']))
+    linkTextParser = between (char '[') (char ']') (many (try nestedElementParser))
     urlParser      = between (char '(') (char ')') (some (noneOf [')']))
 
 -- Images are defined as '%![alt text](url)%'
@@ -67,12 +65,11 @@ picParser = do
 headParser :: Parser Element
 headParser = do
   _    <- startToken
-  text <- some nonToken
+  text <- many (try nestedElementParser)
   _    <- endToken
-  return $ Header (T.pack text)
+  return $ Header text
   where
     startToken = string "%#"
-    nonToken   = noneOf ['%']
     endToken   = string "%"
 
 -- Inline code is defined as '%Icode snippet%''
@@ -92,11 +89,10 @@ cbParser :: Parser Element
 cbParser = do
   _       <- startToken
   lang    <- langNameParser
-  _       <- newline
   CBlock (T.pack lang) . T.pack <$> bodyParser
   where
     startToken     = string "%B"
-    langNameParser = some letterChar
+    langNameParser = manyTill anySingle newline
     bodyParser     = manyTill anySingle endToken
     endToken       = string "B%"
 
@@ -127,19 +123,43 @@ refParser :: Parser Element
 refParser = do
   _      <- startToken
   refNum <- digitChar
-  ref    <- some nonToken
+  ref    <- many (try nestedElementParser)
   _      <- endToken
-  return $ Ref refNum (T.pack ref)
+  return $ Ref refNum ref
   where
     startToken = string "%<"
+    endToken   = string "%"
+
+-- Inline LaTeX expressions are defined as '%mEXPRESSION%'
+imathExprParser :: Parser Element
+imathExprParser = do
+  _    <- startToken
+  expr <- some nonToken
+  _    <- endToken
+  return $ IMathExpr $ T.pack expr
+  where
+    startToken = string "%m"
     nonToken   = noneOf ['%']
     endToken   = string "%"
+
+-- LaTeX expressions are defined as '%M EXORESSION %'
+mathExprParser :: Parser Element
+mathExprParser = do
+  _    <- startToken
+  expr <- some nonToken
+  _    <- endToken
+  return $ MathExpr $ T.pack expr
+  where
+    startToken = string "%M"
+    nonToken   = noneOf ['%']
+    endToken   = string "%"
+    
 
 -- Parses any non token
 textParser :: Parser Element
 textParser = do
-  text <- some (noneOf ['%'])
-  return $ Text $ T.pack text
+  text <- some (noneOf ['%', '[', ']'])
+  return $ Text (T.pack text)
 
 -- Failback parser for syntax erorrs
 failParser :: Parser Element
@@ -147,8 +167,10 @@ failParser = do
   _ <- anySingle
   fail "Unexpected token"
 
-elementParser :: Parser [Element]
-elementParser = many $ try boldParser
+
+-- Nested parser to handle language elements
+nestedElementParser :: Parser Element
+nestedElementParser = try boldParser
                 <|> try italicParser
                 <|> try linkParser
                 <|> try picParser
@@ -158,20 +180,28 @@ elementParser = many $ try boldParser
                 <|> try citParser
                 <|> try linkRefParser
                 <|> try refParser
+                <|> try imathExprParser
+                <|> try mathExprParser
                 <|> try textParser
                 <|> failParser
 
+-- Top level syntax parser
+elementParser :: Parser [Element]
+elementParser = many nestedElementParser
+
 emitHtml :: Element -> Text
-emitHtml (Bold text) = "<b>" <> text <> "</b>"
-emitHtml (Italic text) = "<i>" <> text <> "</i>"
-emitHtml (Link text url) = "<a href=\"" <> url <> "\">" <> text <> "</a>"
+emitHtml (Bold text) = "<b>" <> T.concat (map emitHtml text) <> "</b>"
+emitHtml (Italic text) = "<i>" <> T.concat (map emitHtml text) <> "</i>"
+emitHtml (Link text url) = "<a href=\"" <> url <> "\">" <> T.concat (map emitHtml text) <> "</a>"
 emitHtml (Picture alt url) = "<img src=\"" <> url <> "\" alt=\"" <> alt <> "\">"
-emitHtml (Header text) = "<h2>" <> text <> "</h2>"
+emitHtml (Header text) = "<h2>" <> T.concat (map emitHtml text) <> "</h2>"
 emitHtml (ICode text) = "<code>" <> text <> "</code>"
 emitHtml (CBlock lang content) = "<pre>\n<code class=\"language-" <> lang <> "\">\n" <> content <> "</code></pre>"
 emitHtml (Citation cit) = "<blockquote>\n<div>></div>\n" <> cit <> "</blockquote>"
 emitHtml (LRef num) = "<a id=\"ref-" <> T.singleton num <> "\" href=\"#foot-" <> T.singleton  num <> "\">[" <> T.singleton num <> "]</a>"
-emitHtml (Ref num ref) = "<p id=\"foot-" <> T.singleton num <> "\">[" <> T.singleton num <> "]: " <> ref <> " <a href=\"#ref-" <> T.singleton num <> "\">&#8617;</a></p>"
+emitHtml (Ref num ref) = "<p id=\"foot-" <> T.singleton num <> "\">[" <> T.singleton num <> "]: " <> T.concat (map emitHtml ref) <> " <a href=\"#ref-" <> T.singleton num <> "\">&#8617;</a></p>"
+emitHtml (IMathExpr expr) = "\\(" <> expr <> "\\)"
+emitHtml (MathExpr expr) = "$$\n" <> expr <> "\n$$"
 emitHtml (Text text) = text
 
 converter :: Text -> Either ParserError Text
