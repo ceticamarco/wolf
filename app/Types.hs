@@ -19,8 +19,8 @@ data Element = Bold [Element]
              | Header [Element]
              | ICode Value
              | CBlock Value Value
-             | Citation Value
-             | LRef Char
+             | Citation [Element]
+             | RefLink Char
              | Ref Char [Element]
              | IMathExpr Value
              | MathExpr Value

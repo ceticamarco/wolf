@@ -2,11 +2,12 @@
 module Parser where
 
 import Text.Megaparsec
-import Text.Megaparsec.Char
+import Text.Megaparsec.Char ( char, digitChar, newline, string )
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void (Void)
 import Types (Element(..))
+import Emitter (emitHtml)
 
 type Parser = Parsec Void Text
 type ParserError = ParseErrorBundle Text Void
@@ -15,22 +16,24 @@ type ParserError = ParseErrorBundle Text Void
 boldParser :: Parser Element
 boldParser = do
   _    <- startToken
-  text <- many (try nestedElementParser)
+  text <- bodyParser
   _    <- endToken
   return $ Bold text
   where
     startToken = string "%*"
+    bodyParser = many (try nestedElementParser)
     endToken   = string "%"
 
 -- Italic text is defined as '%_Italic text%'
 italicParser :: Parser Element
 italicParser = do
   _    <- startToken
-  text <- many (try nestedElementParser)
+  text <- bodyParser
   _    <- endToken
   return $ Italic text
   where
     startToken = string "%_"
+    bodyParser = many (try nestedElementParser)
     endToken   = string "%"
 
 -- Links are defined as '%[link text](url)%
@@ -65,11 +68,12 @@ picParser = do
 headParser :: Parser Element
 headParser = do
   _    <- startToken
-  text <- many (try nestedElementParser)
+  text <- bodyParser
   _    <- endToken
   return $ Header text
   where
     startToken = string "%#"
+    bodyParser = many (try nestedElementParser)
     endToken   = string "%"
 
 -- Inline code is defined as '%Icode snippet%''
@@ -96,24 +100,25 @@ cbParser = do
     bodyParser     = manyTill anySingle endToken
     endToken       = string "B%"
 
--- Citations are defined as '%C citationC%'
+-- Citations are defined as '%Ccitation%'
 citParser :: Parser Element
 citParser = do
-  _   <- startToken
-  _   <- newline
-  Citation . T.pack <$> bodyParser
+  _    <- startToken
+  body <- bodyParser
+  _    <- endToken
+  return $ Citation body
   where
     startToken = string "%C"
-    bodyParser = manyTill anySingle endToken
-    endToken   = string "C%"
+    bodyParser = many (try nestedElementParser)
+    endToken   = string "%"
 
 -- Links to footnotes are defined as '%>NUM%'
-linkRefParser :: Parser Element
-linkRefParser = do
+refLinkParser :: Parser Element
+refLinkParser = do
   _      <- startToken
   refNum <- digitChar
   _      <- endToken
-  return $ LRef refNum
+  return $ RefLink refNum
   where
     startToken = string "%>"
     endToken   = string "%"
@@ -142,17 +147,15 @@ imathExprParser = do
     nonToken   = noneOf ['%']
     endToken   = string "%"
 
--- LaTeX expressions are defined as '%M EXORESSION %'
+-- LaTeX expressions are defined as '%M EXORESSION M%'
 mathExprParser :: Parser Element
 mathExprParser = do
   _    <- startToken
-  expr <- some nonToken
-  _    <- endToken
-  return $ MathExpr $ T.pack expr
+  MathExpr . T.pack <$> bodyParser
   where
     startToken = string "%M"
-    nonToken   = noneOf ['%']
-    endToken   = string "%"
+    bodyParser = manyTill anySingle endToken
+    endToken   = string "M%"
     
 
 -- Parses any non token
@@ -170,39 +173,18 @@ failParser = do
 
 -- Nested parser to handle language elements
 nestedElementParser :: Parser Element
-nestedElementParser = try boldParser
-                <|> try italicParser
-                <|> try linkParser
-                <|> try picParser
-                <|> try headParser
-                <|> try icodeParser
-                <|> try cbParser
-                <|> try citParser
-                <|> try linkRefParser
-                <|> try refParser
-                <|> try imathExprParser
-                <|> try mathExprParser
-                <|> try textParser
-                <|> failParser
+nestedElementParser =
+  try boldParser <|> try italicParser                           -- Formatting parsers
+  <|> try linkParser <|> try picParser                          -- Link parsers
+  <|> try headParser <|> try icodeParser                        --
+  <|> refLinkParser  <|> try imathExprParser                    --
+  <|> try citParser  <|> try refParser                          -- Inline element parsers
+  <|> try cbParser   <|> try mathExprParser                     -- Block element parsers
+  <|> try textParser <|> failParser                             -- Generic parsers
 
 -- Top level syntax parser
 elementParser :: Parser [Element]
 elementParser = many nestedElementParser
-
-emitHtml :: Element -> Text
-emitHtml (Bold text) = "<b>" <> T.concat (map emitHtml text) <> "</b>"
-emitHtml (Italic text) = "<i>" <> T.concat (map emitHtml text) <> "</i>"
-emitHtml (Link text url) = "<a href=\"" <> url <> "\">" <> T.concat (map emitHtml text) <> "</a>"
-emitHtml (Picture alt url) = "<img src=\"" <> url <> "\" alt=\"" <> alt <> "\">"
-emitHtml (Header text) = "<h2>" <> T.concat (map emitHtml text) <> "</h2>"
-emitHtml (ICode text) = "<code>" <> text <> "</code>"
-emitHtml (CBlock lang content) = "<pre>\n<code class=\"language-" <> lang <> "\">\n" <> content <> "</code></pre>"
-emitHtml (Citation cit) = "<blockquote>\n<div>></div>\n" <> cit <> "</blockquote>"
-emitHtml (LRef num) = "<a id=\"ref-" <> T.singleton num <> "\" href=\"#foot-" <> T.singleton  num <> "\">[" <> T.singleton num <> "]</a>"
-emitHtml (Ref num ref) = "<p id=\"foot-" <> T.singleton num <> "\">[" <> T.singleton num <> "]: " <> T.concat (map emitHtml ref) <> " <a href=\"#ref-" <> T.singleton num <> "\">&#8617;</a></p>"
-emitHtml (IMathExpr expr) = "\\(" <> expr <> "\\)"
-emitHtml (MathExpr expr) = "$$\n" <> expr <> "\n$$"
-emitHtml (Text text) = text
 
 converter :: Text -> Either ParserError Text
 converter content = case parse elementParser "" content of
