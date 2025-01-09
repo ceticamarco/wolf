@@ -1,5 +1,12 @@
-# Rhino 🦏
+<div align="center">
+<h1>Rhino 🦏</h1>
+    
+<h6><i>Simple markup language for building static websites</i></h6>
 
+[![](https://github.com/ceticamarco/rhino/actions/workflows/build.yml/badge.svg)](https://github.com/ceticamarco/rhino/actions/workflows/build.yml)
+[![](https://github.com/ceticamarco/rhino/actions/workflows/linter.yml/badge.svg)](https://github.com/ceticamarco/rhino/actions/workflows/linter.yml)
+
+</div>
 **Rhino** is a simple markup language for publishing static websites such as blogs, personal portfolio, landing pages or web documents.
 Its syntax is somehow similar to Markdown's, making it very easy to learn and to use. To convert Rhino documents to HTML, you can use
 the Rhino compiler, which transpiles your content into a functional webpage starting from a preexisting template file. This markup language
@@ -169,6 +176,10 @@ fields(e.g., if the page does not require a date), you can simply leave the fiel
 #+TAGS: foo, bar, biz
 ```
 
+> [!CAUTION]
+> The header section **must always be explicitly defined**, regardless of whether you plan to show it on the resulting page
+> or not. The Rhino compiler does not provide any default or fallback values for missing header fields.
+
 ## Compiler
 In this section we will see how to build and how to use the Rhino compiler, which is used to translates Rhino source files
 into static HTML documents.
@@ -195,7 +206,11 @@ Building executable 'rhino' for rhino-0.1.0.0...
 [6 of 6] Linking rhino
 ```
 
-You will find a statically linked binary executable inside the `dist-newstyle` directory.
+You will find a statically linked binary executable inside the `dist-newstyle` directory. 
+To copy it to the root of the repository, exec the following command:
+```sh
+$> cp "$(cabal exec --offline sh -- -c 'command -v rhino')" .
+```
 
 ### Usage
 The Rhino compiler can be used directly from the command line:

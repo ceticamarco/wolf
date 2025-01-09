@@ -1,0 +1,22 @@
+name: Lint
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  linter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Haskell linter(hlint)
+        uses: haskell-actions/hlint-setup@v2
+
+      - name: Run hlint
+        uses: haskell-actions/hlint-run@v2
+        with:
+          path: app/
+          fail-on: suggestion
