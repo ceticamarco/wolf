@@ -7,10 +7,11 @@
 [![](https://github.com/ceticamarco/rhino/actions/workflows/linter.yml/badge.svg)](https://github.com/ceticamarco/rhino/actions/workflows/linter.yml)
 
 </div>
+
 **Rhino** is a simple markup language for publishing static websites such as blogs, personal portfolio, landing pages or web documents.
 Its syntax is somehow similar to Markdown's, making it very easy to learn and to use. To convert Rhino documents to HTML, you can use
-the Rhino compiler, which transpiles your content into a functional webpage starting from a preexisting template file. This markup language
-was primarly built to publish [my blog](http://marcocetica.com) due to the fact that I was too tired to manually write HTML when I was just 
+the Rhino compiler, which translates your content into a functional webpage starting from a preexisting template file. This markup language
+was primarily built to publish [my blog](http://marcocetica.com) due to the fact that I was too tired to manually write HTML when I was just 
 trying to write an article, but I've also successfully used it for building other static projects as well.
 
 ## Syntax Overview
@@ -258,7 +259,8 @@ articles
 ├── euler_number_calculus
 ```
 
-the compiler - when invoked with `./rhino -s articles -o website/posts -t template.html -v` - will generate the following directories inside `website/posts/`:
+the compiler - when invoked with `./rhino -s articles -o website/posts -t template.html -v` - will generate 
+the following directories inside `website/posts/`:
 ```sh
 $> tree website/posts
 posts

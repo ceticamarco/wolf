@@ -10,7 +10,6 @@ data Args = Args
   , verbose   :: Bool
   }
 
-
 type Value = Text
 data Element = Bold [Element]
              | Italic [Element]

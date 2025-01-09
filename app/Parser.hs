@@ -164,23 +164,22 @@ textParser = do
   text <- some (noneOf ['%', '[', ']'])
   return $ Text (T.pack text)
 
--- Failback parser for syntax erorrs
+-- Fallback parser for syntax errors
 failParser :: Parser Element
 failParser = do
   _ <- anySingle
   fail "Unexpected token"
 
-
 -- Nested parser to handle language elements
 nestedElementParser :: Parser Element
 nestedElementParser =
-  try boldParser     <|> try italicParser                       -- Formatting parsers
-  <|> try linkParser <|> try picParser                          -- Link parsers
-  <|> try headParser <|> try icodeParser                        -- <-----------|
-  <|> refLinkParser  <|> try imathExprParser                    -- <-----|     |
-  <|> try citParser  <|> try refParser                          -- Inline element parsers
-  <|> try cbParser   <|> try mathExprParser                     -- Block element parsers
-  <|> try textParser <|> failParser                             -- Generic parsers
+  try boldParser     <|> try italicParser      -- Formatting parsers
+  <|> try linkParser <|> try picParser         -- Link parsers
+  <|> try headParser <|> try icodeParser       -- <-----------|
+  <|> refLinkParser  <|> try imathExprParser   -- <-----|     |
+  <|> try citParser  <|> try refParser         -- Inline element parsers
+  <|> try cbParser   <|> try mathExprParser    -- Block element parsers
+  <|> try textParser <|> failParser            -- Generic parsers
 
 -- Top level syntax parser
 elementParser :: Parser [Element]
