@@ -326,6 +326,17 @@ unexpected newline
 expecting '%'
 ```
 
+## Custom emitter
+By default, Rhino emits HTML tags that are compatible with the CSS classes of my blog. To adapt them to your usecases, you need to modify the
+source file `app/Emitter.hs`. For instance, to update the class of the _head_ element from `post-subtitle` to `myCustomClass`, edit the `headGenerator`
+method as follows:
+```haskell
+headGenerator :: [Element] -> Text
+headGenerator text = "<h2 class=\"myCustomClass\">" <>  -- New CSS class name defined here
+                     T.concat (map emitHtml text) <> "</h2>\n" <>
+                     "<div class=\"sp\"></div>"
+```
+
 
 ## A complete example
 Let's now see a complete example:
@@ -350,7 +361,7 @@ Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia
 %#Print on the console%
 In Python, you can use %Iprint("Hello World");%, while in Java%>1%, you can say:
 
-%BJava
+%Bjava
 public static void main(String[] args) {
     System.out.println("Hello World");
 }
@@ -413,7 +424,7 @@ Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia
 In Python, you can use <code class="inline-code">print("Hello World");</code>, while in Java<a id="ref-1" href="#foot-1">[1]</a>, you can say:
 
 <pre>
-<code class="language-Java">
+<code class="language-java">
 public static void main(String[] args) {
     System.out.println("Hello World");
 }
