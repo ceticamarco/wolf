@@ -174,10 +174,10 @@ failParser = do
 -- Nested parser to handle language elements
 nestedElementParser :: Parser Element
 nestedElementParser =
-  try boldParser <|> try italicParser                           -- Formatting parsers
+  try boldParser     <|> try italicParser                       -- Formatting parsers
   <|> try linkParser <|> try picParser                          -- Link parsers
-  <|> try headParser <|> try icodeParser                        --
-  <|> refLinkParser  <|> try imathExprParser                    --
+  <|> try headParser <|> try icodeParser                        -- <-----------|
+  <|> refLinkParser  <|> try imathExprParser                    -- <-----|     |
   <|> try citParser  <|> try refParser                          -- Inline element parsers
   <|> try cbParser   <|> try mathExprParser                     -- Block element parsers
   <|> try textParser <|> failParser                             -- Generic parsers
