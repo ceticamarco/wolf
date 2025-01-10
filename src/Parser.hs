@@ -147,7 +147,7 @@ imathExprParser = do
     nonToken   = noneOf ['%']
     endToken   = string "%"
 
--- LaTeX expressions are defined as '%M EXORESSION M%'
+-- LaTeX expressions are defined as '%M EXPRESSION M%'
 mathExprParser :: Parser Element
 mathExprParser = do
   _    <- startToken

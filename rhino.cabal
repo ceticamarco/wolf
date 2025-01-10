@@ -2,33 +2,47 @@ cabal-version:      3.0
 name:               rhino
 version:            0.1.0.0
 synopsis:           Markup language for building static websites
--- description:
 homepage:           https://github.com/ceticamarco/rhino
 license:            MIT
 license-file:       LICENSE
 author:             Marco Cetica
 maintainer:         email@marcocetica.com
--- copyright:
 category:           System
 build-type:         Simple
-extra-doc-files:    CHANGELOG.md
--- extra-source-files:
 
 common warnings
     ghc-options: -Wall -Wextra -Werror -O2 -static -threaded
 
+library rhino-lib
+    import:             warnings
+    exposed-modules:    Engine Parser Types Emitter
+    hs-source-dirs:     src
+    build-depends:       base >= 4.7 && <5
+                        , megaparsec
+                        , directory
+                        , filepath
+                        , text
+                        , containers
+                        , time
+    default-language:   Haskell2010
+
 executable rhino
     import:           warnings
     main-is:          Main.hs
-    other-modules:    Engine Types Parser Emitter
-    build-depends:      base >= 4.7 && <5
-                      , parsec
-                      , optparse-applicative
-                      , directory
-                      , filepath
-                      , text
-                      , containers
-                      , time
-                      , megaparsec
     hs-source-dirs:   app
+    build-depends:      base >= 4.7 && <5
+                      , rhino-lib
+                      , optparse-applicative
     default-language: Haskell2010
+
+test-suite rhino-test
+    type:             exitcode-stdio-1.0
+    main-is:          Tests.hs
+    hs-source-dirs:   test
+    build-depends:     base >= 4.7 && <5
+                      , rhino-lib
+                      , HUnit
+                      , megaparsec
+                      , text
+    default-language: Haskell2010
+    ghc-options:      -Wall -Wextra -Werror

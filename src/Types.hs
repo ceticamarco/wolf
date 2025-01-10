@@ -24,3 +24,4 @@ data Element = Bold [Element]
              | IMathExpr Value
              | MathExpr Value
              | Text Value
+             deriving (Eq, Show)

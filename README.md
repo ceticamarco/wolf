@@ -4,6 +4,7 @@
 <h6><i>Simple markup language for building static websites</i></h6>
 
 [![](https://github.com/ceticamarco/rhino/actions/workflows/build.yml/badge.svg)](https://github.com/ceticamarco/rhino/actions/workflows/build.yml)
+[![](https://github.com/ceticamarco/rhino/actions/workflows/tests.yml/badge.svg)](https://github.com/ceticamarco/rhino/actions/workflows/tests.yml)
 [![](https://github.com/ceticamarco/rhino/actions/workflows/linter.yml/badge.svg)](https://github.com/ceticamarco/rhino/actions/workflows/linter.yml)
 
 </div>
@@ -354,6 +355,9 @@ headGenerator text = "<h2 class=\"myCustomClass\">" <>  -- New CSS class name de
                      "<div class=\"sp\"></div>"
 ```
 
+> [!WARNING]
+> Modifying an existing emitter will cause a unit test to fail. 
+> Make sure to update the tests accordingly.
 
 ## A complete example
 Let's now see a complete example:
