@@ -93,6 +93,28 @@ testMathExprEmitter = TestCase $ do
         actual = emitHtml input
     assertEqual "Should emit a math expression" expected actual
 
+testListItemEmitter :: Test
+testListItemEmitter = TestCase $ do
+    let input = LItem [Text "Foo"]
+        expected = "<li>Foo</li>\n"
+        actual = emitHtml input
+    assertEqual "Should emit a list item" expected actual
+
+testOrderedListEmitter :: Test
+testOrderedListEmitter = TestCase $ do
+    let input = OrderedList
+            [ LItem [Text "One"]
+            , LItem [Text "Two"]
+            , LItem [Text "Three"]
+            ]
+        expected = "<ol>\n"
+                <> "<li>One</li>\n"
+                <> "<li>Two</li>\n"
+                <> "<li>Three</li>\n"
+                <> "</ol>"
+        actual = emitHtml input
+    assertEqual "Should emit an ordered list" expected actual
+
 emitterTests :: Test
 emitterTests = TestList
     [ TestLabel "testBold" testBoldEmitter
@@ -107,4 +129,6 @@ emitterTests = TestList
     , TestLabel "testReference" testRefEmitter
     , TestLabel "testIMathExpr" testIMathExprEmitter
     , TestLabel "testMathExpr" testMathExprEmitter
+    , TestLabel "testListItem" testListItemEmitter
+    , TestLabel "testOrderedList" testOrderedListEmitter
     ]

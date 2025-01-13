@@ -156,7 +156,30 @@ mathExprParser = do
     startToken = string "%M"
     bodyParser = manyTill anySingle endToken
     endToken   = string "M%"
-    
+
+-- Ordered list items are defined as '%O<ITEM>%'
+oListItemParser :: Parser Element
+oListItemParser = do
+  _    <- startToken
+  item <- bodyParser
+  _    <- endToken
+  return $ LItem item
+  where
+    startToken = string "%O"
+    bodyParser = many (try nestedElementParser)
+    endToken   = string "%"
+
+-- Ordered lists are defined as multiple list elements
+oListParser :: Parser Element
+oListParser = do
+  items <- some (oListItemParser <* optional newline)
+  return $ OrderedList items
+
+-- The '%' character is defined as '%p%'
+specialCharParser :: Parser Element
+specialCharParser = do
+  _ <- string "%p%"
+  return $ Text "%"
 
 -- Parses any non token
 textParser :: Parser Element
@@ -179,6 +202,8 @@ nestedElementParser =
   <|> refLinkParser  <|> try imathExprParser   -- <-----|     |
   <|> try citParser  <|> try refParser         -- Inline element parsers
   <|> try cbParser   <|> try mathExprParser    -- Block element parsers
+  <|> try oListParser                          -- List parsers
+  <|> try specialCharParser                    -- Special character parser
   <|> try textParser <|> failParser            -- Generic parsers
 
 -- Top level syntax parser

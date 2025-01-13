@@ -57,6 +57,12 @@ mathExprGenerator :: MathExpr -> Text
 mathExprGenerator (InlineExpr expr)  = "\\(" <> expr <> "\\)"
 mathExprGenerator (BlockExpr expr) = "$$" <> expr <> "$$"
 
+listItemGenerator :: [Element] -> Text
+listItemGenerator text = "<li>" <> T.concat (map emitHtml text) <> "</li>\n"
+
+orderedListGenerator :: [Element] -> Text
+orderedListGenerator items = "<ol>\n" <> T.concat (map emitHtml items) <> "</ol>"
+
 emitHtml :: Element -> Text
 emitHtml (Bold text) = boldGenerator text
 emitHtml (Italic text) = italicGenerator text
@@ -70,4 +76,6 @@ emitHtml (RefLink num) = refLinkGenerator num
 emitHtml (Ref num ref) = refGenerator num ref
 emitHtml (IMathExpr expr) = mathExprGenerator (InlineExpr expr)
 emitHtml (MathExpr expr) = mathExprGenerator (BlockExpr expr)
+emitHtml (LItem text) = listItemGenerator text
+emitHtml (OrderedList items) = orderedListGenerator items
 emitHtml (Text text) = text

@@ -102,6 +102,26 @@ testMathExprParser = TestCase $ do
     Left err   -> assertFailure $ "Parser error: " <> show err
     Right res  -> assertEqual "Should parse math expression" expected res
 
+testOListParser :: Test
+testOListParser = TestCase $ do
+  let input = "%OOne%\n%OTwo%%OThree%" -- Missing '\n' is intentional
+      expected = OrderedList
+        [ LItem [Text "One"]
+        , LItem [Text "Two"]
+        , LItem [Text "Three"]
+        ]
+  case parse oListParser "" input of
+    Left err   -> assertFailure $ "Parser error: " <> show err
+    Right res  -> assertEqual "Should parse an ordered list" expected res
+
+testSpecialCharacter :: Test
+testSpecialCharacter = TestCase $ do
+  let input = "%p%"
+      expected = Text "%"
+  case parse specialCharParser "" input of
+    Left err   -> assertFailure $ "Parser error: " <> show err
+    Right res  -> assertEqual "Should parse the percentage character" expected res
+
 parserTests :: Test
 parserTests = TestList
   [ TestLabel "testBold" testBoldParser
@@ -116,4 +136,6 @@ parserTests = TestList
   , TestLabel "testReference" testRefParser
   , TestLabel "testIMathExpression" testIMathExprParser
   , TestLabel "testMathExpression" testMathExprParser
+  , TestLabel "testOrderedListParser" testOListParser
+  , TestLabel "testSpecialCharacter" testSpecialCharacter
   ]

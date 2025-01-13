@@ -108,6 +108,18 @@ B%
 M%
 ```
 
+- **Percentage character**
+```
+%p%
+```
+
+- **Ordered list**
+```
+%OFoo%
+%OBar%
+%OBiz%
+```
+
 ## Template file
 The Rhino compiler requires an additional HTML document called _template file_, which serves as a skeleton of the output webpage. 
 This file defines the structure and the appearance of the final webpage and it's used as a base during the compilation process. 
@@ -357,6 +369,12 @@ Let's now see a complete example:
 
 Welcome to my website! To get in touch with me, please %[go to this page](/contact/)%.
 
+TODO list:
+
+%OCleaning%
+%OCooking%
+%OReading%
+
 %*Lorem ipsum% dolor sit amet, consectetur adipiscing elit. Cras ornare urna et eros dictum maximus.
 Nunc sit amet eros ac mauris placerat luctus. Integer eget nulla lacus. Nulla finibus non ante eget volutpat.
 Maecenas vestibulum mi vitae lectus ultrices vehicula.
@@ -389,10 +407,10 @@ This Rhino file would be compiled to:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<!--
-Generated with Rhino Template Engine
-Developed by Marco Cetica
-Timestamp: 2025-01-09T09:59:29-->
+    <!--
+    Generated with Rhino Template Engine
+    Developed by Marco Cetica
+    Timestamp: 2025-01-09T09:59:29-->
     <head>
         <!-- Meta attributes -->
         <meta charset="utf-8">
@@ -417,6 +435,14 @@ Timestamp: 2025-01-09T09:59:29-->
 <img class="post-img" alt="welcome image" src="/static/welcome.jpg" width="800" height="600">
 
 Welcome to my website! To get in touch with me, please <a href="/contact/">go to this page</a>.
+
+TODO list:
+
+<ol>
+<li>Cleaning</li>
+<li>Cooking</li>
+<li>Reading</li>
+</ol>
 
 <b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit. Cras ornare urna et eros dictum maximus.
 Nunc sit amet eros ac mauris placerat luctus. Integer eget nulla lacus. Nulla finibus non ante eget volutpat.

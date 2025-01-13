@@ -23,5 +23,7 @@ data Element = Bold [Element]
              | Ref Char [Element]
              | IMathExpr Value
              | MathExpr Value
+             | LItem [Element]
+             | OrderedList [Element]
              | Text Value
              deriving (Eq, Show)
