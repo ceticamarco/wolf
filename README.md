@@ -11,7 +11,7 @@
 
 **Rhino** is a simple markup language for publishing static websites such as blogs, personal portfolio, landing pages or web documents.
 Its syntax is somehow similar to Markdown's, making it very easy to learn and to use. To convert Rhino documents to HTML, you can use
-the Rhino compiler, which translates your content into a functional webpage starting from a preexisting template file. This markup language
+the Rhino compiler, which translates your content into a functional webpage sta
 was primarily built to publish [my blog](http://marcocetica.com) due to the fact that I was too tired to manually write HTML when I was just 
 trying to write an article, but I've also successfully used it for building other static projects as well.
 
@@ -37,7 +37,6 @@ Be sure <b>carefully</b> read the following statement <i>before</i> installing t
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND
 </blockquote>
 ```
-
 
 In this short snippet, we have defined a new header called _"Installation"_(denoted by the `#` token), an italic and a bold 
 formatting(denoted by the `_` and the `*` tokens, respectively) and a blockquote using the `C` token. 
@@ -196,16 +195,20 @@ $> cabal build
 Resolving dependencies...
 Build profile: -w ghc-9.4.8 -O1
 In order, the following will be built (use -v for more details):
+ - rhino-0.1.0.0 (lib:rhino-lib) (first run)
  - rhino-0.1.0.0 (exe:rhino) (first run)
+Configuring library 'rhino-lib' for rhino-0.1.0.0...
+Preprocessing library 'rhino-lib' for rhino-0.1.0.0...
+Building library 'rhino-lib' for rhino-0.1.0.0...
+[1 of 4] Compiling Types            ( src/Types.hs, Types.dyn_o )
+[2 of 4] Compiling Emitter          ( src/Emitter.hs Emitter.dyn_o )
+[3 of 4] Compiling Parser           ( src/Parser.hs, Parser.dyn_o )
+[4 of 4] Compiling Engine           ( src/Engine.hs, Engine.dyn_o )
 Configuring executable 'rhino' for rhino-0.1.0.0...
 Preprocessing executable 'rhino' for rhino-0.1.0.0...
 Building executable 'rhino' for rhino-0.1.0.0...
-[1 of 5] Compiling Types            ( app/Types.hs, Types.o )
-[2 of 5] Compiling Emitter          ( app/Emitter.hs, Emitter.o )
-[3 of 5] Compiling Parser           ( app/Parser.hs, Parser.o )
-[4 of 5] Compiling Engine           ( app/Engine.hs, Engine.o )
-[5 of 5] Compiling Main             ( app/Main.hs, Main.o )
-[6 of 6] Linking rhino
+[1 of 1] Compiling Main             ( app/Main.hs, Main.o )
+[2 of 2] Linking rhino
 ```
 
 You will find a statically linked binary executable inside the `dist-newstyle` directory. 
@@ -251,13 +254,9 @@ called `articles` with the following content inside:
 ```sh
 $> tree articles
 articles
-├── arch_lvm_luks_guide
-├── asymmetrical_crypto
-├── blog_defense
-├── buildroot-tutorial
-├── cpp_smart_pointers
-├── discriminated_unions
-├── euler_number_calculus
+├── foo
+├── bar
+├── biz
 ```
 
 the compiler - when invoked with `./rhino -s articles -o website/posts -t template.html -v` - will generate 
@@ -265,19 +264,11 @@ the following directories inside `website/posts/`:
 ```sh
 $> tree website/posts
 posts
-├── arch_lvm_luks_guide
+├── foo
 │   └──index.html
-├── asymmetrical_crypto
+├── bar
 │   └── index.html
-├── blog_defense
-│   └── index.html
-├── buildroot-tutorial
-│   └── index.html
-├── cpp_smart_pointers
-│   └── index.html
-├── discriminated_unions
-│   └── index.html
-├── euler_number_calculus
+├── biz
 │   └── index.html
 ```
 
@@ -299,19 +290,11 @@ This will generate a new file called `index.html` inside `website/posts` **WITHO
 ```sh
 $> tree website/posts
 posts
-├── arch_lvm_luks_guide
+├── foo
+│   └──index.html
+├── bar
 │   └── index.html
-├── asymmetrical_crypto
-│   └── index.html
-├── blog_defense
-│   └── index.html
-├── buildroot-tutorial
-│   └── index.html
-├── cpp_smart_pointers
-│   └── index.html
-├── discriminated_unions
-│   └── index.html
-├── euler_number_calculus
+├── biz
 │   └── index.html
 ├── index.html
 ```
@@ -406,10 +389,10 @@ This Rhino file would be compiled to:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-        <!--
-        Generated with Rhino Template Engine
-        Developed by Marco Cetica
-        Timestamp: 2025-01-09T09:59:29-->
+<!--
+Generated with Rhino Template Engine
+Developed by Marco Cetica
+Timestamp: 2025-01-09T09:59:29-->
     <head>
         <!-- Meta attributes -->
         <meta charset="utf-8">

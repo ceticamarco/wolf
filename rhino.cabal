@@ -38,6 +38,7 @@ executable rhino
 test-suite rhino-test
     type:             exitcode-stdio-1.0
     main-is:          Tests.hs
+    other-modules:    ParserTests EmitterTests
     hs-source-dirs:   test
     build-depends:     base >= 4.7 && <5
                       , rhino-lib

@@ -55,7 +55,7 @@ fillMetadata content ((placeholder, value):xs) =
     fillMetadata (T.replace expr value content) xs
   where
     expr = "%%" <> placeholder <> "%%"
-                        
+
 convertFile :: Bool -> FilePath -> FilePath -> FilePath -> IO (Maybe String)
 convertFile is_verbose outputDir tplFile srcFile = do
   -- Print a status message
@@ -65,7 +65,7 @@ convertFile is_verbose outputDir tplFile srcFile = do
   let postDirName = takeBaseName srcFile
       outputFile  = if postDirName /= "index"
                     then outputDir </> postDirName </> "index.html"
-                    else outputDir </> "index.html"    
+                    else outputDir </> "index.html"
   when (postDirName /= "index") $ createDirectoryIfMissing True (outputDir </> postDirName)
 
   -- Read source file and template
@@ -96,7 +96,7 @@ convertFile is_verbose outputDir tplFile srcFile = do
               <> "\tDeveloped by Marco Cetica\n"
               <> "\tTimestamp: " <> timestamp <> "-->"
           finalPost = T.replace "%%TIMESTAMP%%" (T.pack info) postWithMetadata
-          
+
       -- Write converted post to the output file
       TIO.writeFile outputFile finalPost
       return Nothing
@@ -108,9 +108,7 @@ convertFiles args = do
   -- Convert all source files in the source directory
   res <- mapM (convertFile v o t) fileList
   let errors = catMaybes res
-  if null errors
-    then return Nothing
-    else return $ listToMaybe errors
+  return $ listToMaybe errors
   where
     v = verbose args
     o = outDir args
