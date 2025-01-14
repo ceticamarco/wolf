@@ -25,5 +25,6 @@ data Element = Bold [Element]
              | MathExpr Value
              | LItem [Element]
              | OrderedList [Element]
+             | UnorderedList [Element]
              | Text Value
              deriving (Eq, Show)

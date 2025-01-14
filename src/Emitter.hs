@@ -63,6 +63,9 @@ listItemGenerator text = "<li>" <> T.concat (map emitHtml text) <> "</li>\n"
 orderedListGenerator :: [Element] -> Text
 orderedListGenerator items = "<ol>\n" <> T.concat (map emitHtml items) <> "</ol>"
 
+unordereListGenerator :: [Element] -> Text
+unordereListGenerator items = "<ul>\n" <> T.concat (map emitHtml items) <> "</ul>"
+
 emitHtml :: Element -> Text
 emitHtml (Bold text) = boldGenerator text
 emitHtml (Italic text) = italicGenerator text
@@ -78,4 +81,5 @@ emitHtml (IMathExpr expr) = mathExprGenerator (InlineExpr expr)
 emitHtml (MathExpr expr) = mathExprGenerator (BlockExpr expr)
 emitHtml (LItem text) = listItemGenerator text
 emitHtml (OrderedList items) = orderedListGenerator items
+emitHtml (UnorderedList items) = unordereListGenerator items
 emitHtml (Text text) = text

@@ -114,6 +114,18 @@ testOListParser = TestCase $ do
     Left err   -> assertFailure $ "Parser error: " <> show err
     Right res  -> assertEqual "Should parse an ordered list" expected res
 
+testUListParser :: Test
+testUListParser = TestCase $ do
+  let input = "%UOne%\n%UTwo%%UThree%" -- Missing '\n' is intentional
+      expected = UnorderedList
+        [ LItem [Text "One"]
+        , LItem [Text "Two"]
+        , LItem [Text "Three"]
+        ]
+  case parse uListParser "" input of
+    Left err   -> assertFailure $ "Parser error: " <> show err
+    Right res  -> assertEqual "Should parse an unordered list" expected res
+
 testSpecialCharacter :: Test
 testSpecialCharacter = TestCase $ do
   let input = "%p%"
@@ -137,5 +149,6 @@ parserTests = TestList
   , TestLabel "testIMathExpression" testIMathExprParser
   , TestLabel "testMathExpression" testMathExprParser
   , TestLabel "testOrderedListParser" testOListParser
+  , TestLabel "testUnorderedListParser" testUListParser
   , TestLabel "testSpecialCharacter" testSpecialCharacter
   ]

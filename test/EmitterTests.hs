@@ -115,6 +115,21 @@ testOrderedListEmitter = TestCase $ do
         actual = emitHtml input
     assertEqual "Should emit an ordered list" expected actual
 
+testUnorderedListEmitter :: Test
+testUnorderedListEmitter = TestCase $ do
+    let input = UnorderedList
+            [ LItem [Text "One"]
+            , LItem [Text "Two"]
+            , LItem [Text "Three"]
+            ]
+        expected = "<ul>\n"
+                <> "<li>One</li>\n"
+                <> "<li>Two</li>\n"
+                <> "<li>Three</li>\n"
+                <> "</ul>"
+        actual = emitHtml input
+    assertEqual "Should emit an unordered list" expected actual
+
 emitterTests :: Test
 emitterTests = TestList
     [ TestLabel "testBold" testBoldEmitter
@@ -131,4 +146,5 @@ emitterTests = TestList
     , TestLabel "testMathExpr" testMathExprEmitter
     , TestLabel "testListItem" testListItemEmitter
     , TestLabel "testOrderedList" testOrderedListEmitter
+    , TestLabel "testUnorderedList" testUnorderedListEmitter
     ]

@@ -11,8 +11,8 @@
 
 **Rhino** is a simple markup language for publishing static websites such as blogs, personal portfolio, landing pages or web documents.
 Its syntax is somehow similar to Markdown's, making it very easy to learn and to use. To convert Rhino documents to HTML, you can use
-the Rhino compiler, which translates your content into a functional webpage sta
-was primarily built to publish [my blog](http://marcocetica.com) due to the fact that I was too tired to manually write HTML when I was just 
+the Rhino compiler, which translates your content into a functional webpage starting from a preexisting
+template file. This markup language was primarily built to publish [my blog](http://marcocetica.com) due to the fact that I was too tired to manually write HTML when I was just 
 trying to write an article, but I've also successfully used it for building other static projects as well.
 
 ## Syntax Overview
@@ -114,10 +114,17 @@ M%
 ```
 
 - **Ordered list**
+```text
+%O<ITEM>%
+%O<ITEM>%
+%O<ITEM>%
 ```
-%OFoo%
-%OBar%
-%OBiz%
+
+- **Unordered list**
+```text
+%U<ITEM>%
+%U<ITEM>%
+%U<ITEM>%
 ```
 
 ## Template file
@@ -367,7 +374,10 @@ Let's now see a complete example:
 
 %![welcome image](/static/welcome.jpg)%
 
-Welcome to my website! To get in touch with me, please %[go to this page](/contact/)%.
+Welcome to my website! To get in touch with me, you can:
+
+%UWrite me an %[email](mailto:john@example.com)%%
+%USend me a handwritten letter%
 
 TODO list:
 
@@ -407,10 +417,10 @@ This Rhino file would be compiled to:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-    <!--
-    Generated with Rhino Template Engine
-    Developed by Marco Cetica
-    Timestamp: 2025-01-09T09:59:29-->
+        <!--
+        Generated with Rhino Template Engine
+        Developed by Marco Cetica
+        Timestamp: 2025-01-14T07:15:41-->
     <head>
         <!-- Meta attributes -->
         <meta charset="utf-8">
@@ -434,8 +444,12 @@ This Rhino file would be compiled to:
 
 <img class="post-img" alt="welcome image" src="/static/welcome.jpg" width="800" height="600">
 
-Welcome to my website! To get in touch with me, please <a href="/contact/">go to this page</a>.
+Welcome to my website! To get in touch with me, you can:
 
+<ul>
+<li>Write me an <a href="mailto:john@example.com">email</a></li>
+<li>Send me a handwritten letter</li>
+</ul>
 TODO list:
 
 <ol>
@@ -443,7 +457,6 @@ TODO list:
 <li>Cooking</li>
 <li>Reading</li>
 </ol>
-
 <b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit. Cras ornare urna et eros dictum maximus.
 Nunc sit amet eros ac mauris placerat luctus. Integer eget nulla lacus. Nulla finibus non ante eget volutpat.
 Maecenas vestibulum mi vitae lectus ultrices vehicula.

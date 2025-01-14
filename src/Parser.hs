@@ -161,19 +161,37 @@ mathExprParser = do
 oListItemParser :: Parser Element
 oListItemParser = do
   _    <- startToken
-  item <- bodyParser
+  body <- bodyParser
   _    <- endToken
-  return $ LItem item
+  return $ LItem body
   where
     startToken = string "%O"
     bodyParser = many (try nestedElementParser)
     endToken   = string "%"
 
--- Ordered lists are defined as multiple list elements
+-- Ordered lists are defined as multiple ordered list elements
 oListParser :: Parser Element
 oListParser = do
   items <- some (oListItemParser <* optional newline)
   return $ OrderedList items
+
+-- Unordered list items are defined as '%U<ITEM>%'
+uListItemParser :: Parser Element
+uListItemParser = do
+  _    <- startToken
+  body <- bodyParser
+  _    <- endToken
+  return $ LItem body
+  where
+    startToken = string "%U"
+    bodyParser = many (try nestedElementParser)
+    endToken   = string "%"
+
+-- Unordered lists are defined as multiple unordered list elements
+uListParser :: Parser Element
+uListParser = do
+  items <- some (uListItemParser <* optional newline)
+  return $ UnorderedList items
 
 -- The '%' character is defined as '%p%'
 specialCharParser :: Parser Element
@@ -196,15 +214,15 @@ failParser = do
 -- Nested parser to handle language elements
 nestedElementParser :: Parser Element
 nestedElementParser =
-  try boldParser     <|> try italicParser      -- Formatting parsers
-  <|> try linkParser <|> try picParser         -- Link parsers
-  <|> try headParser <|> try icodeParser       -- <-----------|
-  <|> refLinkParser  <|> try imathExprParser   -- <-----|     |
-  <|> try citParser  <|> try refParser         -- Inline element parsers
-  <|> try cbParser   <|> try mathExprParser    -- Block element parsers
-  <|> try oListParser                          -- List parsers
-  <|> try specialCharParser                    -- Special character parser
-  <|> try textParser <|> failParser            -- Generic parsers
+  try boldParser      <|> try italicParser      -- Formatting parsers
+  <|> try linkParser  <|> try picParser         -- Link parsers
+  <|> try headParser  <|> try icodeParser       -- <-----------|
+  <|> refLinkParser   <|> try imathExprParser   -- <-----|     |
+  <|> try citParser   <|> try refParser         -- Inline element parsers
+  <|> try cbParser    <|> try mathExprParser    -- Block element parsers
+  <|> try oListParser <|> try uListParser       -- List parsers
+  <|> try specialCharParser                     -- Special character parser
+  <|> try textParser <|> failParser             -- Generic parsers
 
 -- Top level syntax parser
 elementParser :: Parser [Element]
