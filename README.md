@@ -127,6 +127,16 @@ M%
 %U<ITEM>%
 ```
 
+- **Tables**
+```text
+%T
+HA,B,C,D%
+RFirst,Second,Third,Fourth%
+RI,II,III,IV%
+%
+```
+where `H` stands for a _new header_ and `R` stands for a _new row_.
+
 ## Template file
 The Rhino compiler requires an additional HTML document called _template file_, which serves as a skeleton of the output webpage. 
 This file defines the structure and the appearance of the final webpage and it's used as a base during the compilation process. 
@@ -408,11 +418,19 @@ B%
 a^n + b^n = c^n
 M%
 
+
+%T
+HA,B,C,D%
+RFirst,Second,Third,Fourth%
+RI,II,III,IV%
+%
+
+
 %#Footnotes%
 %<1Define this function inside the %Imain% class%
 ```
 
-This Rhino file would be compiled to:
+which produces the following HTML page:
 
 ```html
 <!DOCTYPE html>
@@ -420,7 +438,7 @@ This Rhino file would be compiled to:
         <!--
         Generated with Rhino Template Engine
         Developed by Marco Cetica
-        Timestamp: 2025-01-14T07:15:41-->
+        Timestamp: 2025-01-21T09:38:35-->
     <head>
         <!-- Meta attributes -->
         <meta charset="utf-8">
@@ -439,7 +457,7 @@ This Rhino file would be compiled to:
         <div>1970-01-01</div>
         <div>
 
-<h2 class="post-subtitle">Welcome</h2>
+<h2 id="Welcome" class="post-subtitle">Welcome <a class="head-tag" href="#Welcome">§</a></h2>
 <div class="sp"></div>
 
 <img class="post-img" alt="welcome image" src="/static/welcome.jpg" width="800" height="600">
@@ -462,7 +480,7 @@ Nunc sit amet eros ac mauris placerat luctus. Integer eget nulla lacus. Nulla fi
 Maecenas vestibulum mi vitae lectus ultrices vehicula.
 Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;
 
-<h2 class="post-subtitle">Print on the console</h2>
+<h2 id="Print_on_the_console" class="post-subtitle">Print on the console <a class="head-tag" href="#Print_on_the_console">§</a></h2>
 <div class="sp"></div>
 In Python, you can use <code class="inline-code">print("Hello World");</code>, while in Java<a id="ref-1" href="#foot-1">[1]</a>, you can say:
 
@@ -474,26 +492,54 @@ public static void main(String[] args) {
 </code></pre>
 
 
-<h2 class="post-subtitle">Lie algebra</h2>
+<h2 id="Lie_algebra" class="post-subtitle">Lie algebra <a class="head-tag" href="#Lie_algebra">§</a></h2>
 <div class="sp"></div>
 <blockquote>
 <div class="cursor">></div>
 A <b>Lie algebra</b> is a vector space \(g\) over a <i>field</i> \(F\) together with an operation called <b>Lie bracket</b>
 </blockquote>
 
-<h2 class="post-subtitle">Fermat's Last Theorem</h2>
+<h2 id="Fermat's_Last_Theorem" class="post-subtitle">Fermat's Last Theorem <a class="head-tag" href="#Fermat's_Last_Theorem">§</a></h2>
 <div class="sp"></div>
 $$
 a^n + b^n = c^n
 $$
 
-<h2 class="post-subtitle">Footnotes</h2>
+
+<table>
+<thead>
+<tr>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+<th>D</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>First</td>
+<td>Second</td>
+<td>Third</td>
+<td>Fourth</td>
+</tr>
+<tr>
+<td>I</td>
+<td>II</td>
+<td>III</td>
+<td>IV</td>
+</tr>
+</tbody>
+</table>
+
+
+<h2 id="Footnotes" class="post-subtitle">Footnotes <a class="head-tag" href="#Footnotes">§</a></h2>
 <div class="sp"></div>
 <p id="foot-1">[1]: Define this function inside the <code class="inline-code">main</code> class <a href="#ref-1">&#8617;</a></p>
 
         </div>
     </body>
 </html>
+
 ```
 
 ## License

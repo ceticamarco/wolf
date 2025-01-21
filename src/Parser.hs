@@ -2,7 +2,7 @@
 module Parser where
 
 import Text.Megaparsec
-import Text.Megaparsec.Char ( char, digitChar, newline, string )
+import Text.Megaparsec.Char ( char, digitChar, newline, string, alphaNumChar )
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void (Void)
@@ -193,6 +193,42 @@ uListParser = do
   items <- some (uListItemParser <* optional newline)
   return $ UnorderedList items
 
+-- Table header is defined as 'H<COLUMN-1>,...,<COLUMN-N>%'
+tableHeaderParser :: Parser Element
+tableHeaderParser = do
+  _       <- startToken
+  columns <- colsParser
+  _       <- endToken
+  return $ TableHeader columns
+  where
+    startToken = string "H"
+    colsParser = sepBy1 (T.pack <$> some alphaNumChar) (char ',')
+    endToken = string "%"
+
+-- Table rows are defined as 'R<COLUMN-1>,...,<COLUMN-N>%'
+tableRowParser :: Parser Element
+tableRowParser = do
+  _ <- startToken
+  row <- rowParser
+  _   <- endToken
+  return $ TableRow row
+  where
+    startToken = string "R"
+    rowParser = sepBy1 (T.pack <$> some alphaNumChar) (char ',')
+    endToken = string "%"
+
+-- Table are defined as an header followed by multiple rows
+tableParser :: Parser Element
+tableParser = do
+  _      <- startToken <* optional newline
+  header <- tableHeaderParser <* optional newline
+  rows   <- some (tableRowParser <* optional newline)
+  _      <- endToken
+  return $ Table header rows
+  where
+    startToken = string "%T"
+    endToken = string "%"
+
 -- The '%' character is defined as '%p%'
 specialCharParser :: Parser Element
 specialCharParser = do
@@ -221,8 +257,9 @@ nestedElementParser =
   <|> try citParser   <|> try refParser         -- Inline element parsers
   <|> try cbParser    <|> try mathExprParser    -- Block element parsers
   <|> try oListParser <|> try uListParser       -- List parsers
+  <|> try tableParser                           -- Table parsers
   <|> try specialCharParser                     -- Special character parser
-  <|> try textParser <|> failParser             -- Generic parsers
+  <|> try textParser  <|> failParser            -- Generic parsers
 
 -- Top level syntax parser
 elementParser :: Parser [Element]

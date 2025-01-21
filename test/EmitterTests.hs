@@ -38,7 +38,8 @@ testPictureEmitter = TestCase $ do
 testHeaderEmitter :: Test
 testHeaderEmitter = TestCase $ do
     let input = Header [Text "heading"]
-        expected = "<h2 class=\"post-subtitle\">heading</h2>\n"
+        expected = "<h2 id=\"heading\" class=\"post-subtitle\">heading "
+                <> "<a class=\"head-tag\" href=\"#heading\">§</a></h2>\n"
                 <> "<div class=\"sp\"></div>"
         actual = emitHtml input
     assertEqual "Should emit an header" expected actual
@@ -130,6 +131,37 @@ testUnorderedListEmitter = TestCase $ do
         actual = emitHtml input
     assertEqual "Should emit an unordered list" expected actual
 
+testTableHeaderGenerator :: Test
+testTableHeaderGenerator = TestCase $ do
+    let input = TableHeader ["A", "B", "C"]
+        expected = "<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n</tr>\n</thead>\n"
+        actual = emitHtml input
+    assertEqual "Should emit a table header" expected actual
+
+testTableRowGenerator :: Test
+testTableRowGenerator = TestCase $ do
+    let input = TableRow ["F", "S", "T", "F"]
+        expected = "<tr>\n<td>F</td>\n<td>S</td>\n<td>T</td>\n<td>F</td>\n</tr>\n"
+        actual = emitHtml input
+    assertEqual "Should emit a table row" expected actual
+
+testTableGenerator :: Test
+testTableGenerator = TestCase $ do
+    let input = Table
+            (TableHeader ["A", "B", "C", "D"])
+            [
+            TableRow ["F", "S", "T", "F"]
+            , TableRow ["O", "T", "T", "F"]
+            , TableRow ["I", "II", "III", "IV"]
+            ]
+        expected = "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n<th>D</th>\n</tr>\n</thead>\n"
+                 <> "<tbody>\n<tr>\n<td>F</td>\n<td>S</td>\n<td>T</td>\n<td>F</td>\n</tr>\n"
+                 <> "<tr>\n<td>O</td>\n<td>T</td>\n<td>T</td>\n<td>F</td>\n</tr>\n"
+                 <> "<tr>\n<td>I</td>\n<td>II</td>\n<td>III</td>\n<td>IV</td>\n</tr>\n"
+                 <> "</tbody>\n</table>"
+        actual = emitHtml input
+    assertEqual "Should emit a table" expected actual
+
 emitterTests :: Test
 emitterTests = TestList
     [ TestLabel "testBold" testBoldEmitter
@@ -147,4 +179,7 @@ emitterTests = TestList
     , TestLabel "testListItem" testListItemEmitter
     , TestLabel "testOrderedList" testOrderedListEmitter
     , TestLabel "testUnorderedList" testUnorderedListEmitter
+    , TestLabel "testTableHeader" testTableHeaderGenerator
+    , TestLabel "testTableRow" testTableRowGenerator
+    , TestLabel "testTable" testTableGenerator
     ]

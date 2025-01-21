@@ -11,6 +11,7 @@ data Args = Args
   }
 
 type Value = Text
+
 data Element = Bold [Element]
              | Italic [Element]
              | Link [Element] Value
@@ -26,5 +27,8 @@ data Element = Bold [Element]
              | LItem [Element]
              | OrderedList [Element]
              | UnorderedList [Element]
+             | TableHeader [Value]
+             | TableRow [Value]
+             | Table Element [Element]
              | Text Value
              deriving (Eq, Show)

@@ -126,6 +126,20 @@ testUListParser = TestCase $ do
     Left err   -> assertFailure $ "Parser error: " <> show err
     Right res  -> assertEqual "Should parse an unordered list" expected res
 
+testTableParser :: Test
+testTableParser = TestCase $ do
+  let input = "%T\nHA,B,C,D%\nRF,S,T,F%\nRO,T,T,F%RI,II,III,IV%%" -- Missing '\n' is intentional
+      expected = Table
+        (TableHeader ["A", "B", "C", "D"])
+        [
+          TableRow ["F", "S", "T", "F"]
+        , TableRow ["O", "T", "T", "F"]
+        , TableRow ["I", "II", "III", "IV"]
+        ]
+  case parse tableParser "" input of
+    Left err   -> assertFailure $ "Parser error: " <> show err
+    Right res  -> assertEqual "Should parse a table" expected res
+
 testSpecialCharacter :: Test
 testSpecialCharacter = TestCase $ do
   let input = "%p%"
@@ -150,5 +164,6 @@ parserTests = TestList
   , TestLabel "testMathExpression" testMathExprParser
   , TestLabel "testOrderedListParser" testOListParser
   , TestLabel "testUnorderedListParser" testUListParser
+  , TestLabel "testTableParser" testTableParser
   , TestLabel "testSpecialCharacter" testSpecialCharacter
   ]

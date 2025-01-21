@@ -38,4 +38,4 @@ main = do
     opts = info (argsParser <**> helper)
       ( fullDesc
      <> progDesc "rhino - markup language for building static websites"
-     <> header "rhino v0.1 by Marco Cetica (c) 2025")
+     <> header "rhino v0.1.0.2 by Marco Cetica (c) 2025")
