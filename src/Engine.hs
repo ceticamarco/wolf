@@ -39,6 +39,22 @@ processLine line = do
   value <- T.stripPrefix ":" rest
   return (T.strip key, T.strip value)
 
+checkMetadata :: FilePath -> IO Bool
+checkMetadata srcFile = do
+  content <- TIO.readFile srcFile
+  let patterns = [ "#+HEAD_TITLE:"
+                 , "#+TITLE:"
+                 , "#+DESCRIPTION:"
+                 , "#+DATE:"
+                 , "#+TAGS:"
+                 ]
+  let contentList = take 5 $ T.lines content
+  if length contentList < 5
+    then return False
+    else do
+      let header = zip contentList patterns
+      return $ all (\(line, prefix) -> T.isPrefixOf prefix line) header
+
 getFileMetadata :: FilePath -> IO [(Text, Text)]
 getFileMetadata srcFile = do
   content <- TIO.readFile srcFile
@@ -59,7 +75,7 @@ fillMetadata content ((placeholder, value):xs) =
 convertFile :: Bool -> FilePath -> FilePath -> FilePath -> IO (Maybe String)
 convertFile is_verbose outputDir tplFile srcFile = do
   -- Print a status message
-  when is_verbose $ putStrLn $ "Publishing " ++ srcFile ++ "..."
+  when is_verbose $ putStrLn $ "Publishing " <> srcFile <> "..."
   -- Create post folder in '<OUTPUT_DIR>/<POST_DIRNAME>/index.html'
   -- if <SOURCE_FILE> != 'index'
   let postDirName = takeBaseName srcFile
@@ -72,34 +88,39 @@ convertFile is_verbose outputDir tplFile srcFile = do
   srcFileContent <- TIO.readFile srcFile
   tplFileContent <- TIO.readFile tplFile
 
-  -- Convert file to HTML
-  case converter srcFileContent of
-    Left err -> return $ Just $ "Error processing file '"
-                <> srcFile <> "' @ " <> errorBundlePretty err
-    Right convertedFile -> do
-      -- Retrieve post metadata
-      metadata <- getFileMetadata srcFile
+  -- Check whether post metadata is specified
+  isHeaderValid <- checkMetadata srcFile
+  if not isHeaderValid
+    then return $ Just $ "Please, specify the header of '" <> srcFile <> "'"
+    else
+      -- Convert file to HTML
+      case converter srcFileContent of
+        Left err -> return $ Just $ "Error processing file '"
+                    <> srcFile <> "' @ " <> errorBundlePretty err
+        Right convertedFile -> do
+          -- Retrieve post metadata
+          metadata <- getFileMetadata srcFile
 
-      -- Remove metadata from source file(i.e., first 5 lines)
-      let wholeFile = T.lines convertedFile
-          postContent = T.unlines $ drop 5 wholeFile
+          -- Remove metadata from source file(i.e., first 5 lines)
+          let wholeFile = T.lines convertedFile
+              postContent = T.unlines $ drop 5 wholeFile
 
-      -- Replace page content into template file
-      let templateWithContent = T.replace "%%CONTENT%%" postContent tplFileContent
+          -- Replace page content into template file
+          let templateWithContent = T.replace "%%CONTENT%%" postContent tplFileContent
 
-      -- Replace metadata placeholders with actual values
-      let postWithMetadata = fillMetadata templateWithContent metadata
+          -- Replace metadata placeholders with actual values
+          let postWithMetadata = fillMetadata templateWithContent metadata
 
-      -- Add timestamp and build information
-      timestamp <- getTimestamp
-      let info = "\t<!--\n\tGenerated with Rhino Template Engine\n"
-              <> "\tDeveloped by Marco Cetica\n"
-              <> "\tTimestamp: " <> timestamp <> "-->"
-          finalPost = T.replace "%%TIMESTAMP%%" (T.pack info) postWithMetadata
+          -- Add timestamp and build information
+          timestamp <- getTimestamp
+          let info = "\t<!--\n\tGenerated with Rhino Template Engine\n"
+                  <> "\tDeveloped by Marco Cetica\n"
+                  <> "\tTimestamp: " <> timestamp <> "-->"
+              finalPost = T.replace "%%TIMESTAMP%%" (T.pack info) postWithMetadata
 
-      -- Write converted post to the output file
-      TIO.writeFile outputFile finalPost
-      return Nothing
+          -- Write converted post to the output file
+          TIO.writeFile outputFile finalPost
+          return Nothing
 
 convertFiles :: Args -> IO (Maybe String)
 convertFiles args = do

@@ -207,7 +207,8 @@ fields(e.g., if the page does not require a date), you can simply leave the fiel
 ```
 
 > [!CAUTION]
-> The header section **must always be explicitly defined**, regardless of whether you plan to show it on the resulting page
+> The header section **must always be explicitly defined(in this order)**, regardless 
+> of whether you plan to show it on the resulting page
 > or not. The Rhino compiler does not provide any default or fallback values for missing header fields.
 
 ## Compiler
