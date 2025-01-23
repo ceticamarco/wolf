@@ -119,6 +119,7 @@ M%
 %O<ITEM>%
 %O<ITEM>%
 ```
+**tip**: lists can be nested
 
 - **Unordered list**
 ```text
@@ -250,7 +251,7 @@ $> cp "$(cabal exec --offline sh -- -c 'command -v rhino')" .
 ### Usage
 The Rhino compiler can be used directly from the command line:
 ```text
-rhino v0.1 by Marco Cetica (c) 2025
+rhino v0.1.0.2 by Marco Cetica (c) 2025
 
 Usage: rhino (-s|--src SRC_DIR) (-o|--output OUT_DIR) (-t|--template TEMPLATE)
              [-v|--verbose]
@@ -358,14 +359,12 @@ expecting '%'
 ```
 
 ## Custom emitter
-By default, Rhino emits HTML tags that are compatible with the CSS classes of my blog. To adapt them to your usecases, you need to modify the
-source file `app/Emitter.hs`. For instance, to update the class of the _head_ element from `post-subtitle` to `myCustomClass`, edit the `headGenerator`
+By default, Rhino emits HTML tags that are compatible with the CSS classes of my blog. To adapt them to your use cases, you need to modify the
+source file `app/Emitter.hs`. For instance, to update the class of the _code_ element from `inline-code` to `myCustomClass`, edit the `headGenerator`
 method as follows:
 ```haskell
-headGenerator :: [Element] -> Text
-headGenerator text = "<h2 class=\"myCustomClass\">" <>  -- New CSS class name defined here
-                     T.concat (map emitHtml text) <> "</h2>\n" <>
-                     "<div class=\"sp\"></div>"
+icodeGenerator :: Text -> Text
+icodeGenerator text = "<code class=\"myCustomClass\">" <> text <> "</code>"
 ```
 
 > [!WARNING]
@@ -392,9 +391,16 @@ Welcome to my website! To get in touch with me, you can:
 
 TODO list:
 
+%OHouse
 %OCleaning%
 %OCooking%
 %OReading%
+%
+%OWork
+%OBrainstorming%
+%ORefactoring%
+%OTraining%
+%
 
 %*Lorem ipsum% dolor sit amet, consectetur adipiscing elit. Cras ornare urna et eros dictum maximus.
 Nunc sit amet eros ac mauris placerat luctus. Integer eget nulla lacus. Nulla finibus non ante eget volutpat.
@@ -439,7 +445,7 @@ which produces the following HTML page:
         <!--
         Generated with Rhino Template Engine
         Developed by Marco Cetica
-        Timestamp: 2025-01-21T09:38:35-->
+        Timestamp: 2025-01-23T06:51:52-->
     <head>
         <!-- Meta attributes -->
         <meta charset="utf-8">
@@ -472,9 +478,18 @@ Welcome to my website! To get in touch with me, you can:
 TODO list:
 
 <ol>
+<li>House
+<ol>
 <li>Cleaning</li>
 <li>Cooking</li>
 <li>Reading</li>
+</ol></li>
+<li>Work
+<ol>
+<li>Brainstorming</li>
+<li>Refactoring</li>
+<li>Training</li>
+</ol></li>
 </ol>
 <b>Lorem ipsum</b> dolor sit amet, consectetur adipiscing elit. Cras ornare urna et eros dictum maximus.
 Nunc sit amet eros ac mauris placerat luctus. Integer eget nulla lacus. Nulla finibus non ante eget volutpat.
@@ -540,7 +555,6 @@ $$
         </div>
     </body>
 </html>
-
 ```
 
 ## License
