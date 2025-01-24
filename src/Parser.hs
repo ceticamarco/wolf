@@ -2,7 +2,7 @@
 module Parser where
 
 import Text.Megaparsec
-import Text.Megaparsec.Char ( char, digitChar, newline, string, alphaNumChar, spaceChar )
+import Text.Megaparsec.Char ( char, digitChar, newline, string )
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void (Void)
@@ -202,19 +202,21 @@ tableHeaderParser = do
   return $ TableHeader columns
   where
     startToken = string "H"
-    colsParser = sepBy1 (T.pack <$> some (alphaNumChar <|> spaceChar)) (char ',')
+    colsParser = sepBy1 (T.pack <$> some validChars) (char ',')
+    validChars = oneOf $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " .+-@!^&*(){}[]=/\\"
     endToken = string "%"
 
 -- Table rows are defined as 'R<COLUMN-1>,...,<COLUMN-N>%'
 tableRowParser :: Parser Element
 tableRowParser = do
-  _ <- startToken
+  _   <- startToken
   row <- rowParser
   _   <- endToken
   return $ TableRow row
   where
     startToken = string "R"
-    rowParser = sepBy1 (T.pack <$> some (alphaNumChar <|> spaceChar)) (char ',')
+    rowParser = sepBy1 (T.pack <$> some validChars) (char ',')
+    validChars = oneOf $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " .+-@!^&*(){}[]=/\\"
     endToken = string "%"
 
 -- Table are defined as an header followed by multiple rows

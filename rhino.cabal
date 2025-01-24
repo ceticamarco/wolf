@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               rhino
-version:            0.1.0.2
+version:            0.1.0.3
 synopsis:           Markup language for building static websites
 homepage:           https://github.com/ceticamarco/rhino
 license:            MIT
