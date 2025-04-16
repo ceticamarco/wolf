@@ -31,14 +31,26 @@ headGenerator text = "<h2 id=\"" <> fmtID <> "\" " <>
                      " <a class=\"head-tag\" href=\"#" <> fmtID <> "\">§</a></h2>\n" <>
                      "<div class=\"sp\"></div>"
     where
-        fmtID = T.map (\c -> if c == ' ' then '_' else c) content
+        content :: Text
         content = foldr ((<>) . emitHtml) T.empty text
 
+        fmtID :: Text
+        fmtID = foldr ((<>) . toID) T.empty text
+
+        genID :: Char -> Char
+        genID c = if c == ' ' then '_' else c
+
+        toID :: Element -> Text
+        toID element = case element of
+            Link value _ -> T.map genID (foldr ((<>) . emitHtml) T.empty value)
+            ICode value -> T.map genID value
+            _ -> T.map genID (emitHtml element)
+        
 icodeGenerator :: Text -> Text
 icodeGenerator text = "<code class=\"inline-code\">" <> text <> "</code>"
 
-cblockGenerator :: Text -> Text -> Text
-cblockGenerator lang content = "<pre>\n<code class=\"language-" <>
+cBlockGenerator :: Text -> Text -> Text
+cBlockGenerator lang content = "<pre>\n<code class=\"language-" <>
                                lang <> "\">\n" <>
                                content <> "</code></pre>"
 
@@ -49,9 +61,9 @@ citGenerator text = "<blockquote>\n<div class=\"cursor\">></div>\n" <>
 
 
 refLinkGenerator :: Char -> Text
-refLinkGenerator num = "<a id=\"ref-" <> ref <> "\" href=\"#foot-" <> ref <> "\">[" <>
-                       ref <> "]</a>"
-    where ref = T.singleton  num
+refLinkGenerator num = "<sup>[<a id=\"ref-" <> ref <> "\" href=\"#foot-" <> ref <> "\">" <>
+                       ref <> "</a>]</sup>"
+    where ref = T.singleton num
 
 refGenerator :: Char -> [Element] -> Text
 refGenerator num text = "<p id=\"foot-" <> ref <> "\">" <>
@@ -80,7 +92,7 @@ unorderedListGenerator items = "<ul>\n" <> content <> "</ul>"
     where content = foldr ((<>) . emitHtml) T.empty items
 
 extractHeaderCols :: Element -> [Text]
-extractHeaderCols (TableHeader cols) = cols
+extractHeaderCols (TableHeader cols) = map emitHtml cols
 extractHeaderCols _ = []
 
 tHeadGenerator :: Element -> Text
@@ -90,7 +102,7 @@ tHeadGenerator header = "<thead>\n<tr>\n"
     where fmtItem item = "<th>" <> item <> "</th>\n"
 
 extractRowCols :: Element -> [Text]
-extractRowCols (TableRow cols) = cols
+extractRowCols (TableRow cols) = map emitHtml cols
 extractRowCols _ = []
 
 tRowGenerator :: Element -> Text
@@ -115,7 +127,7 @@ emitHtml (Link text url) = linkGenerator text url
 emitHtml (Picture alt url) = picGenerator alt url
 emitHtml (Header text) = headGenerator text
 emitHtml (ICode text) = icodeGenerator text
-emitHtml (CBlock lang content) = cblockGenerator lang content
+emitHtml (CBlock lang content) = cBlockGenerator lang content
 emitHtml (Citation cit) = citGenerator cit
 emitHtml (RefLink num) = refLinkGenerator num
 emitHtml (Ref num ref) = refGenerator num ref

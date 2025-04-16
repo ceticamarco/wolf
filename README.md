@@ -108,9 +108,10 @@ B%
 M%
 ```
 
-- **Percentage character**
+- **Special characters**
 ```
-%p%
+%p% -> %
+%$% -> $
 ```
 
 - **Ordered list**
@@ -131,9 +132,9 @@ M%
 - **Tables**
 ```text
 %T
-HA,B,C,D%
-RFirst,Second,Third,Fourth%
-RI,II,III,IV%
+HA$B$C$D%
+RFirst$Second$Third$Fourth%
+RI$II$III$IV%
 %
 ```
 where `H` stands for a _new header_ and `R` stands for a _new row_.
@@ -224,20 +225,21 @@ After that, you will be able to build the Rhino compiler by issuing the followin
 ```sh
 $> cabal build
 Resolving dependencies...
-Build profile: -w ghc-9.4.8 -O1
+Build profile: -w ghc-9.6.7 -O1
 In order, the following will be built (use -v for more details):
- - rhino-0.1.0.0 (lib:rhino-lib) (first run)
- - rhino-0.1.0.0 (exe:rhino) (first run)
-Configuring library 'rhino-lib' for rhino-0.1.0.0...
-Preprocessing library 'rhino-lib' for rhino-0.1.0.0...
-Building library 'rhino-lib' for rhino-0.1.0.0...
-[1 of 4] Compiling Types            ( src/Types.hs, Types.dyn_o )
-[2 of 4] Compiling Emitter          ( src/Emitter.hs Emitter.dyn_o )
-[3 of 4] Compiling Parser           ( src/Parser.hs, Parser.dyn_o )
-[4 of 4] Compiling Engine           ( src/Engine.hs, Engine.dyn_o )
-Configuring executable 'rhino' for rhino-0.1.0.0...
-Preprocessing executable 'rhino' for rhino-0.1.0.0...
-Building executable 'rhino' for rhino-0.1.0.0...
+ - rhino-0.1.0.4 (lib:rhino-lib) (first run)
+ - rhino-0.1.0.4 (exe:rhino) (first run)
+Configuring library 'rhino-lib' for rhino-0.1.0.4...
+Preprocessing library 'rhino-lib' for rhino-0.1.0.4...
+Building library 'rhino-lib' for rhino-0.1.0.4...
+[1 of 5] Compiling Paths_rhino      ( Paths_rhino.o, Paths_rhino.dyn_o )
+[2 of 5] Compiling Types            ( src/Types.hs, Types.o, Types.dyn_o )
+[3 of 5] Compiling Emitter          ( src/Emitter.hs, Emitter.o, Emitter.dyn_o )
+[4 of 5] Compiling Parser           ( src/Parser.hs, Parser.o, Parser.dyn_o )
+[5 of 5] Compiling Engine           ( src/Engine.hs, Engine.o, Engine.dyn_o )
+Configuring executable 'rhino' for rhino-0.1.0.4...
+Preprocessing executable 'rhino' for rhino-0.1.0.4...
+Building executable 'rhino' for rhino-0.1.0.4...
 [1 of 1] Compiling Main             ( app/Main.hs, Main.o )
 [2 of 2] Linking rhino
 ```
@@ -251,9 +253,9 @@ $> cp "$(cabal exec --offline sh -- -c 'command -v rhino')" .
 ### Usage
 The Rhino compiler can be used directly from the command line:
 ```text
-rhino v0.1.0.2 by Marco Cetica (c) 2025
+rhino v0.1.0.4 by Marco Cetica (c) 2025
 
-Usage: rhino (-s|--src SRC_DIR) (-o|--output OUT_DIR) (-t|--template TEMPLATE)
+Usage: rhino (-s|--src SRC_DIR) (-o|--output OUT_DIR) (-t|--template TEMPLATE) 
              [-v|--verbose]
 
   rhino - markup language for building static websites
@@ -442,10 +444,10 @@ which produces the following HTML page:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-        <!--
-        Generated with Rhino Template Engine
-        Developed by Marco Cetica
-        Timestamp: 2025-01-23T06:51:52-->
+	<!--
+	Powered by Rhino Template Engine(v0.1.0.4)
+	Developed by Marco Cetica
+	Timestamp: 2025-04-16T13:52:58-->
     <head>
         <!-- Meta attributes -->
         <meta charset="utf-8">
@@ -458,12 +460,12 @@ which produces the following HTML page:
         <!-- Title -->
         <title>Head section title :: My Website</title>
     </head>
-
+    
     <body>
         <h1>Body title</h1>
         <div>1970-01-01</div>
         <div>
-
+            
 <h2 id="Welcome" class="post-subtitle">Welcome <a class="head-tag" href="#Welcome">§</a></h2>
 <div class="sp"></div>
 
@@ -498,7 +500,7 @@ Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia
 
 <h2 id="Print_on_the_console" class="post-subtitle">Print on the console <a class="head-tag" href="#Print_on_the_console">§</a></h2>
 <div class="sp"></div>
-In Python, you can use <code class="inline-code">print("Hello World");</code>, while in Java<a id="ref-1" href="#foot-1">[1]</a>, you can say:
+In Python, you can use <code class="inline-code">print("Hello World");</code>, while in Java<sup>[<a id="ref-1" href="#foot-1">1</a>]</sup>, you can say:
 
 <pre>
 <code class="language-java">

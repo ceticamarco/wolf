@@ -1,166 +1,132 @@
 {-# LANGUAGE OverloadedStrings #-}
 module EmitterTests where
 
-import Test.HUnit
+import Test.HUnit ((~:), (~=?), Test(..) )
 import Emitter (emitHtml)
 import Types (Element(..))
 
 testBoldEmitter :: Test
-testBoldEmitter = TestCase $ do
-    let input = Bold [Text ("bold text")]
-        expected = "<b>bold text</b>"
-        actual = emitHtml input
-    assertEqual "Should emit bold text" expected actual
+testBoldEmitter = TestList [
+        "Bold" ~: "<b>bold text</b>" ~=? emitHtml (Bold [Text "bold text"])
+    ]
 
 testItalicEmitter :: Test
-testItalicEmitter = TestCase $ do
-    let input = Italic [Text ("italic text")]
-        expected = "<i>italic text</i>"
-        actual = emitHtml input
-    assertEqual "Should emit italic text" expected actual
+testItalicEmitter = TestList [
+        "Italic" ~: "<i>italic text</i>" ~=? emitHtml (Italic [Text "italic text"])
+    ]
 
 testLinkEmitter :: Test
-testLinkEmitter = TestCase $ do
-    let input = Link [Text ("link")] ("http://example.com")
-        expected = "<a href=\"http://example.com\">link</a>"
-        actual = emitHtml input
-    assertEqual "Should emit a link" expected actual
+testLinkEmitter = TestList [
+        "Link" ~: "<a href=\"http://example.com\">link</a>" ~=? emitHtml (Link [Text "link"] "http://example.com")
+    ]
 
 testPictureEmitter :: Test
-testPictureEmitter = TestCase $ do
-    let input = Picture ("alt") ("http://example.com?pic.jpg")
-        expected = "<img class=\"post-img\" alt=\"alt\" " 
-                 <> "src=\"http://example.com?pic.jpg\" "
-                 <> "width=\"800\" height=\"600\">"
-        actual = emitHtml input
-    assertEqual "Should emit a picture" expected actual
+testPictureEmitter = TestList [
+        "Picture" ~: "<img class=\"post-img\" alt=\"alt\" src=\"http://example.com?pic.jpg\" width=\"800\" height=\"600\">"
+            ~=? emitHtml (Picture "alt" "http://example.com?pic.jpg")
+    ]
 
 testHeaderEmitter :: Test
-testHeaderEmitter = TestCase $ do
-    let input = Header [Text "heading"]
-        expected = "<h2 id=\"heading\" class=\"post-subtitle\">heading "
-                <> "<a class=\"head-tag\" href=\"#heading\">§</a></h2>\n"
-                <> "<div class=\"sp\"></div>"
-        actual = emitHtml input
-    assertEqual "Should emit an header" expected actual
-    
+testHeaderEmitter = TestList [
+        "Header" ~: "<h2 id=\"heading\" class=\"post-subtitle\">heading <a class=\"head-tag\" href=\"#heading\">§</a></h2>\n"
+                 <> "<div class=\"sp\"></div>"
+            ~=? emitHtml (Header [Text "heading"])
+    ]
+
 testICodeEmitter :: Test
-testICodeEmitter = TestCase $ do
-    let input = ICode "snippet"
-        expected = "<code class=\"inline-code\">snippet</code>"
-        actual = emitHtml input
-    assertEqual "Should emit an inline code snippet" expected actual
+testICodeEmitter = TestList [
+        "inline code" ~: "<code class=\"inline-code\">snippet</code>"
+            ~=? emitHtml (ICode "snippet")
+    ]
 
 testCBlockEmitter :: Test
-testCBlockEmitter = TestCase $ do
-    let input = CBlock "lang" "code"
-        expected = "<pre>\n<code class=\"language-lang\">\ncode</code></pre>"
-        actual = emitHtml input
-    assertEqual "Should emit a code block" expected actual
+testCBlockEmitter = TestList [
+        "code block" ~: "<pre>\n<code class=\"language-lang\">\ncode</code></pre>"
+            ~=? emitHtml (CBlock "lang" "code")
+    ]
 
 testCitationEmitter :: Test
-testCitationEmitter = TestCase $ do
-    let input = Citation [Text "citation"]
-        expected = "<blockquote>\n<div class=\"cursor\">></div>\ncitation\n</blockquote>"
-        actual = emitHtml input
-    assertEqual "Should emit a blockquote" expected actual
+testCitationEmitter = TestList [
+        "citation" ~: "<blockquote>\n<div class=\"cursor\">></div>\ncitation\n</blockquote>"
+            ~=? emitHtml (Citation [Text "citation"])
+    ]
 
 testRefLinkEmitter :: Test
-testRefLinkEmitter = TestCase $ do
-    let input = RefLink '1'
-        expected = "<a id=\"ref-1\" href=\"#foot-1\">[1]</a>"
-        actual = emitHtml input
-    assertEqual "Should emit a link to reference" expected actual
+testRefLinkEmitter = TestList [
+        "ref link" ~: "<sup>[<a id=\"ref-1\" href=\"#foot-1\">1</a>]</sup>"
+            ~=? emitHtml (RefLink '1')
+    ]
 
 testRefEmitter :: Test
-testRefEmitter = TestCase $ do
-    let input = Ref '1' [Text "reference"]
-        expected = "<p id=\"foot-1\">[1]: reference "
-                <> "<a href=\"#ref-1\">&#8617;</a></p>"
-        actual = emitHtml input
-    assertEqual "Should emit a reference" expected actual
+testRefEmitter = TestList [
+        "ref" ~: "<p id=\"foot-1\">[1]: reference <a href=\"#ref-1\">&#8617;</a></p>"
+            ~=? emitHtml (Ref '1' [Text "reference"])
+    ]
 
 testIMathExprEmitter :: Test
-testIMathExprEmitter = TestCase $ do
-    let input = IMathExpr "Expr"
-        expected = "\\(Expr\\)"
-        actual = emitHtml input
-    assertEqual "Should emit an inline math expression" expected actual
+testIMathExprEmitter = TestList [
+        "inline math" ~: "\\(Expr\\)"
+            ~=? emitHtml (IMathExpr "Expr")
+    ]
 
 testMathExprEmitter :: Test
-testMathExprEmitter = TestCase $ do
-    let input = MathExpr "Expr"
-        expected = "$$Expr$$"
-        actual = emitHtml input
-    assertEqual "Should emit a math expression" expected actual
+testMathExprEmitter = TestList [
+        "math block" ~: "$$Expr$$"
+            ~=? emitHtml (MathExpr "Expr")
+    ]
 
 testListItemEmitter :: Test
-testListItemEmitter = TestCase $ do
-    let input = LItem [Text "Foo"]
-        expected = "<li>Foo</li>\n"
-        actual = emitHtml input
-    assertEqual "Should emit a list item" expected actual
+testListItemEmitter = TestList [
+        "list" ~: "<li>Foo</li>\n"
+            ~=? emitHtml (LItem [Text "Foo"])
+    ]
 
 testOrderedListEmitter :: Test
-testOrderedListEmitter = TestCase $ do
-    let input = OrderedList
-            [ LItem [Text "One"]
-            , LItem [Text "Two"]
-            , LItem [Text "Three"]
-            ]
-        expected = "<ol>\n"
-                <> "<li>One</li>\n"
-                <> "<li>Two</li>\n"
-                <> "<li>Three</li>\n"
-                <> "</ol>"
-        actual = emitHtml input
-    assertEqual "Should emit an ordered list" expected actual
+testOrderedListEmitter = TestList [
+        "ordered list" ~: "<ol>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ol>"
+            ~=? emitHtml ( OrderedList [ LItem [Text "One"]
+                                       , LItem [Text "Two"]
+                                       , LItem [Text "Three"]
+                                       ])
+    ]
 
 testUnorderedListEmitter :: Test
-testUnorderedListEmitter = TestCase $ do
-    let input = UnorderedList
-            [ LItem [Text "One"]
-            , LItem [Text "Two"]
-            , LItem [Text "Three"]
-            ]
-        expected = "<ul>\n"
-                <> "<li>One</li>\n"
-                <> "<li>Two</li>\n"
-                <> "<li>Three</li>\n"
-                <> "</ul>"
-        actual = emitHtml input
-    assertEqual "Should emit an unordered list" expected actual
+testUnorderedListEmitter = TestList [
+        "unordered list" ~: "<ul>\n<li>One</li>\n<li>Two</li>\n<li>Three</li>\n</ul>"
+            ~=? emitHtml ( UnorderedList [ LItem [Text "One"]
+                                         , LItem [Text "Two"]
+                                         , LItem [Text "Three"]
+                                         ])
+    ]
 
 testTableHeaderGenerator :: Test
-testTableHeaderGenerator = TestCase $ do
-    let input = TableHeader ["A", "B", "C"]
-        expected = "<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n</tr>\n</thead>\n"
-        actual = emitHtml input
-    assertEqual "Should emit a table header" expected actual
+testTableHeaderGenerator = TestList [
+        "table header" ~: "<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n</tr>\n</thead>\n"
+            ~=? emitHtml (TableHeader [Text "A", Text "B", Text "C"])
+    ]
 
 testTableRowGenerator :: Test
-testTableRowGenerator = TestCase $ do
-    let input = TableRow ["F", "S", "T", "F"]
-        expected = "<tr>\n<td>F</td>\n<td>S</td>\n<td>T</td>\n<td>F</td>\n</tr>\n"
-        actual = emitHtml input
-    assertEqual "Should emit a table row" expected actual
+testTableRowGenerator = TestList [
+        "table row" ~: "<tr>\n<td>F</td>\n<td>S</td>\n<td>T</td>\n<td>F</td>\n</tr>\n"
+            ~=? emitHtml (TableRow [Text "F", Text "S", Text "T", Text "F"])
+    ]
 
 testTableGenerator :: Test
-testTableGenerator = TestCase $ do
-    let input = Table
-            (TableHeader ["A", "B", "C", "D"])
-            [
-            TableRow ["F", "S", "T", "F"]
-            , TableRow ["O", "T", "T", "F"]
-            , TableRow ["I", "II", "III", "IV"]
-            ]
-        expected = "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n<th>D</th>\n</tr>\n</thead>\n"
+testTableGenerator = TestList [
+        "table" ~: "<table>\n<thead>\n<tr>\n<th>A</th>\n<th>B</th>\n<th>C</th>\n<th>D</th>\n</tr>\n</thead>\n"
                  <> "<tbody>\n<tr>\n<td>F</td>\n<td>S</td>\n<td>T</td>\n<td>F</td>\n</tr>\n"
                  <> "<tr>\n<td>O</td>\n<td>T</td>\n<td>T</td>\n<td>F</td>\n</tr>\n"
-                 <> "<tr>\n<td>I</td>\n<td>II</td>\n<td>III</td>\n<td>IV</td>\n</tr>\n"
+                 <> "<tr>\n<td><b>I</b></td>\n<td>II</td>\n<td>III</td>\n<td>IV</td>\n</tr>\n"
                  <> "</tbody>\n</table>"
-        actual = emitHtml input
-    assertEqual "Should emit a table" expected actual
+            ~=? emitHtml (Table
+                            (TableHeader [Text "A", Text "B", Text "C", Text "D"])
+                            [
+                            TableRow [Text "F", Text "S", Text "T", Text "F"]
+                            , TableRow [Text "O", Text "T", Text "T", Text "F"]
+                            , TableRow [Bold [Text "I"], Text "II", Text "III", Text "IV"]
+                            ]
+                        )
+    ]
 
 emitterTests :: Test
 emitterTests = TestList

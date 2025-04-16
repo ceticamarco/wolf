@@ -2,6 +2,19 @@
 module Parser where
 
 import Text.Megaparsec
+    ( (<|>),
+      optional,
+      anySingle,
+      noneOf,
+      parse,
+      between,
+      many,
+      manyTill,
+      sepBy1,
+      some,
+      Parsec,
+      MonadParsec(try),
+      ParseErrorBundle )
 import Text.Megaparsec.Char ( char, digitChar, newline, string )
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -202,8 +215,7 @@ tableHeaderParser = do
   return $ TableHeader columns
   where
     startToken = string "H"
-    colsParser = sepBy1 (T.pack <$> some validChars) (char ',')
-    validChars = oneOf $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " .+-@!^&*(){}[]=/\\"
+    colsParser = nestedElementParser `sepBy1` char '$'
     endToken = string "%"
 
 -- Table rows are defined as 'R<COLUMN-1>,...,<COLUMN-N>%'
@@ -215,8 +227,7 @@ tableRowParser = do
   return $ TableRow row
   where
     startToken = string "R"
-    rowParser = sepBy1 (T.pack <$> some validChars) (char ',')
-    validChars = oneOf $ ['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " .+-@!^&*(){}[]=/\\"
+    rowParser = nestedElementParser `sepBy1` char '$'
     endToken = string "%"
 
 -- Table are defined as an header followed by multiple rows
@@ -232,15 +243,26 @@ tableParser = do
     endToken = string "%"
 
 -- The '%' character is defined as '%p%'
+percentageParser :: Parser Element
+percentageParser = do
+  _ <- "%p%"
+  return $ Text "%"
+
+-- The '$' character is defined as '%$%'
+dollarParser :: Parser Element
+dollarParser = do
+  _ <- "%$%"
+  return $ Text "$"
+
+-- Special characters include '%' and '$'
 specialCharParser :: Parser Element
 specialCharParser = do
-  _ <- string "%p%"
-  return $ Text "%"
+  try percentageParser <|> try dollarParser
 
 -- Parses any non token
 textParser :: Parser Element
 textParser = do
-  text <- some (noneOf ['%', '[', ']'])
+  text <- some (noneOf ['%', '[', ']', '$'])
   return $ Text (T.pack text)
 
 -- Fallback parser for syntax errors
@@ -252,16 +274,16 @@ failParser = do
 -- Nested parser to handle language elements
 nestedElementParser :: Parser Element
 nestedElementParser =
-  try boldParser      <|> try italicParser      -- Formatting parsers
-  <|> try linkParser  <|> try picParser         -- Link parsers
-  <|> try headParser  <|> try icodeParser       -- <-----------|
-  <|> refLinkParser   <|> try imathExprParser   -- <-----|     |
-  <|> try citParser   <|> try refParser         -- Inline element parsers
-  <|> try cbParser    <|> try mathExprParser    -- Block element parsers
-  <|> try oListParser <|> try uListParser       -- List parsers
-  <|> try tableParser                           -- Table parsers
-  <|> try specialCharParser                     -- Special character parser
-  <|> try textParser  <|> failParser            -- Generic parsers
+  try boldParser          <|> try italicParser      -- Formatting parsers
+  <|> try linkParser      <|> try picParser         -- Link parsers
+  <|> try headParser      <|> try icodeParser       -- <-----------|
+  <|> try refLinkParser   <|> try imathExprParser   -- <-----|     |
+  <|> try citParser       <|> try refParser         -- Inline element parsers
+  <|> try cbParser        <|> try mathExprParser    -- Block element parsers
+  <|> try oListParser     <|> try uListParser       -- List parsers
+  <|> try tableParser                               -- Table parsers
+  <|> try specialCharParser                         -- Special character parser
+  <|> try textParser      <|> failParser            -- Generic parsers
 
 -- Top level syntax parser
 elementParser :: Parser [Element]

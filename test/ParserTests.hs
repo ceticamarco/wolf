@@ -1,152 +1,133 @@
 {-# LANGUAGE OverloadedStrings #-}
 module ParserTests where
 
-import Test.HUnit
-import Text.Megaparsec
+import Test.HUnit ((~:), (~=?), Test(..) )
+import Text.Megaparsec (parse)
 import Parser
+    ( boldParser,
+      cbParser,
+      citParser,
+      headParser,
+      icodeParser,
+      imathExprParser,
+      italicParser,
+      linkParser,
+      mathExprParser,
+      oListParser,
+      picParser,
+      refLinkParser,
+      refParser,
+      specialCharParser,
+      tableParser,
+      uListParser )
 import Types (Element(..))
 
 testBoldParser :: Test
-testBoldParser = TestCase $ do
-  let input = "%*Bold text%"
-      expected = Bold [Text "Bold text"]
-  case parse boldParser "" input of
-    Left err  -> assertFailure $ "Parser error: " <> show err
-    Right res -> assertEqual "Should parse bold text" expected res
+testBoldParser = TestList [
+    "Normal bold" ~: Right (Bold [Text "text"]) ~=? parse boldParser "" "%*text%",
+    "Recursive bold" ~: Right (Bold [Bold [Text "text"]]) ~=? parse boldParser "" "%*%*text%%"
+  ]
 
 testItalicParser :: Test
-testItalicParser = TestCase $ do
-  let input = "%_Italic text%"
-      expected = Italic [Text "Italic text"]
-  case parse italicParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse italic text" expected res
+testItalicParser = TestList [
+    "Normal italic" ~: Right (Italic [Text "text"]) ~=? parse italicParser "" "%_text%",
+    "Recursive italic" ~: Right (Italic [Italic [Text "text"]]) ~=? parse italicParser "" "%_%_text%%"
+  ]
 
 testLinkParser :: Test
-testLinkParser = TestCase $ do
-  let input = "%[link](http://example.com)%"
-      expected = Link [Text "link"] ("http://example.com")
-  case parse linkParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse link" expected res
+testLinkParser = TestList [
+    "Normal link" ~: Right (Link [Text "link"] "http://example.com") ~=? parse linkParser "" "%[link](http://example.com)%",
+    "Recursive link" ~: Right (Link [Bold [Text "link"]] "http://example.com") ~=? parse linkParser "" "%[%*link%](http://example.com)%"
+  ]
 
 testPicParser :: Test
-testPicParser = TestCase $ do
-  let input = "%![alt](http://example.com?pic.jpg)%"
-      expected = Picture "alt" ("http://example.com?pic.jpg")
-  case parse picParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse picture" expected res
+testPicParser = TestList [
+    "Normal pic" ~: Right (Picture "alt" "http://example.com?pic.jpg") ~=? parse picParser "" "%![alt](http://example.com?pic.jpg)%"
+  ]
 
 testHeadParser :: Test
-testHeadParser = TestCase $ do
-  let input = "%#heading%"
-      expected = Header [Text "heading"]
-  case parse headParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse header" expected res
+testHeadParser = TestList [
+    "Normal head" ~: Right (Header [Text "head"]) ~=? parse headParser "" "%#head%",
+    "Recursive head" ~: Right (Header [Bold [Text "head"]]) ~=? parse headParser "" "%#%*head%%"
+  ]
 
 testICodeParser :: Test
-testICodeParser = TestCase $ do
-  let input = "%Isnippet%"
-      expected = ICode "snippet"
-  case parse icodeParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse inline code" expected res
+testICodeParser = TestList [
+    "Normal icode" ~: Right (ICode "snippet") ~=? parse icodeParser "" "%Isnippet%"
+  ]
 
 testCBParser :: Test
-testCBParser = TestCase $ do
-  let input = "%Blang\ncodeB%"
-      expected = CBlock "lang" "code"
-  case parse cbParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse codeblock" expected res
+testCBParser = TestList [
+    "Normal codeblock" ~: Right (CBlock "lang" "code") ~=? parse cbParser "" "%Blang\ncodeB%"
+  ]
 
 testCitParser :: Test
-testCitParser = TestCase $ do
-  let input = "%Ccitation%"
-      expected = Citation [Text "citation"]
-  case parse citParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse citation" expected res
+testCitParser = TestList [
+    "Normal codeblock" ~: Right (Citation [Text "citation"]) ~=? parse citParser "" "%Ccitation%",
+    "Recursive codeblock" ~: Right (Citation [Bold [Text "citation"]]) ~=? parse citParser "" "%C%*citation%%"
+  ]
 
 testRefLinkParser :: Test
-testRefLinkParser = TestCase $ do
-  let input = "%>1%"
-      expected = RefLink '1'
-  case parse refLinkParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse link to reference" expected res
+testRefLinkParser = TestList [
+    "Normal ref link" ~: Right (RefLink '1') ~=? parse refLinkParser "" "%>1%"
+  ]
 
 testRefParser :: Test
-testRefParser = TestCase $ do
-  let input = "%<1reference%"
-      expected = Ref '1' [Text "reference"]
-  case parse refParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse reference" expected res
+testRefParser = TestList [
+    "Normal ref parser" ~: Right (Ref '1' [Text "ref"]) ~=? parse refParser "" "%<1ref%",
+    "Recursive ref parser" ~: Right (Ref '1' [Bold [Text "ref"]]) ~=? parse refParser "" "%<1%*ref%%"
+  ]
 
 testIMathExprParser :: Test
-testIMathExprParser = TestCase $ do
-  let input = "%mExpr%"
-      expected = IMathExpr "Expr"
-  case parse imathExprParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse inline math expression" expected res
+testIMathExprParser = TestList [
+    "Normal inline math" ~: Right (IMathExpr "Expr") ~=? parse imathExprParser "" "%mExpr%"
+  ]
 
 testMathExprParser :: Test
-testMathExprParser = TestCase $ do
-  let input = "%MExprM%"
-      expected = MathExpr "Expr"
-  case parse mathExprParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse math expression" expected res
+testMathExprParser = TestList [
+    "Normal math expr" ~: Right (MathExpr "Expr") ~=? parse mathExprParser "" "%MExprM%"
+  ]
 
 testOListParser :: Test
-testOListParser = TestCase $ do
-  let input = "%OOne%\n%OTwo%%OThree%" -- Missing '\n' is intentional
-      expected = OrderedList
-        [ LItem [Text "One"]
-        , LItem [Text "Two"]
-        , LItem [Text "Three"]
-        ]
-  case parse oListParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse an ordered list" expected res
+testOListParser = TestList [
+    "Normal ordered list" ~: Right (OrderedList [ LItem [Text "One"], LItem [Text "Two"], LItem [Text "Three"]])
+      ~=? parse oListParser "" "%OOne%\n%OTwo%%OThree%",
+    "Nested ordered list" ~: Right (OrderedList [ LItem [Bold [Text "One"]], LItem [Text "Two"], LItem [Text "Three"]])
+      ~=? parse oListParser "" "%O%*One%%\n%OTwo%%OThree%"
+  ]
 
 testUListParser :: Test
-testUListParser = TestCase $ do
-  let input = "%UOne%\n%UTwo%%UThree%" -- Missing '\n' is intentional
-      expected = UnorderedList
-        [ LItem [Text "One"]
-        , LItem [Text "Two"]
-        , LItem [Text "Three"]
-        ]
-  case parse uListParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse an unordered list" expected res
+testUListParser = TestList [
+    "Normal unordered list" ~: Right (UnorderedList [ LItem [Text "One"], LItem [Text "Two"], LItem [Text "Three"]])
+      ~=? parse uListParser "" "%UOne%\n%UTwo%%UThree%",
+    "Nested unordered list" ~: Right (UnorderedList [ LItem [Bold [Text "One"]], LItem [Text "Two"], LItem [Text "Three"]])
+      ~=? parse uListParser "" "%U%*One%%\n%UTwo%%UThree%"
+  ]
 
 testTableParser :: Test
-testTableParser = TestCase $ do
-  let input = "%T\nHA,B,C,D%\nRF,S,T,F%\nRO,T,T,F%RI,II,III,IV%%" -- Missing '\n' is intentional
-      expected = Table
-        (TableHeader ["A", "B", "C", "D"])
-        [
-          TableRow ["F", "S", "T", "F"]
-        , TableRow ["O", "T", "T", "F"]
-        , TableRow ["I", "II", "III", "IV"]
-        ]
-  case parse tableParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse a table" expected res
+testTableParser = TestList [
+     "Normal table" ~: Right (Table (TableHeader [Text "A", Text "B", Text "C", Text "D"])
+                                        [
+                                          TableRow [Text "F", Text "S", Text "T", Text "F"]
+                                        , TableRow [Text "O", Text "T", Text "T", Text "F"]
+                                        , TableRow [Text "I", Text "II", Text "III", Text "IV"]
+                                        ])
+        ~=? parse tableParser "" "%T\nHA$B$C$D%\nRF$S$T$F%\nRO$T$T$F%RI$II$III$IV%%", -- Missing '\n' is intentional"
+      "Nested table" ~: Right (Table (TableHeader [Text "A", Text "B", Text "C", Text "D"])
+                                        [
+                                          TableRow [Text "F", Bold [Text "S"], Text "T", Text "F"]
+                                        , TableRow [Text "O", Text "T", Text "T", Text "F"]
+                                        , TableRow [Text "I", Text "II", Text "III", Text "IV"]
+                                        ])
+        ~=? parse tableParser "" "%T\nHA$B$C$D%\nRF$%*S%$T$F%\nRO$T$T$F%RI$II$III$IV%%" -- Missing '\n' is intentional"
+  ]
 
-testSpecialCharacter :: Test
-testSpecialCharacter = TestCase $ do
-  let input = "%p%"
-      expected = Text "%"
-  case parse specialCharParser "" input of
-    Left err   -> assertFailure $ "Parser error: " <> show err
-    Right res  -> assertEqual "Should parse the percentage character" expected res
+
+testSpecialChars :: Test
+testSpecialChars = TestList [
+      "percentage symbol" ~: Right (Text "%") ~=? parse specialCharParser "" "%p%",
+      "dollar symbol" ~: Right (Text "$") ~=? parse specialCharParser "" "%$%"
+  ]
 
 parserTests :: Test
 parserTests = TestList
@@ -165,5 +146,5 @@ parserTests = TestList
   , TestLabel "testOrderedListParser" testOListParser
   , TestLabel "testUnorderedListParser" testUListParser
   , TestLabel "testTableParser" testTableParser
-  , TestLabel "testSpecialCharacter" testSpecialCharacter
+  , TestLabel "testSpecialCharacters" testSpecialChars
   ]

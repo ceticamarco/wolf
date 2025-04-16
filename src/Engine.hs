@@ -3,6 +3,8 @@ module Engine where
 
 import Types (Args(..))
 import Parser (converter)
+import Paths_rhino (version)
+import Data.Version (showVersion)
 import System.Directory (doesDirectoryExist, doesFileExist, createDirectoryIfMissing, listDirectory)
 import Data.Time (getCurrentTime, formatTime, defaultTimeLocale)
 import Data.Text (Text)
@@ -113,7 +115,8 @@ convertFile is_verbose outputDir tplFile srcFile = do
 
           -- Add timestamp and build information
           timestamp <- getTimestamp
-          let info = "\t<!--\n\tGenerated with Rhino Template Engine\n"
+          let info = "\t<!--\n\tPowered by Rhino Template Engine(v" 
+                  <> showVersion version <> ")\n"
                   <> "\tDeveloped by Marco Cetica\n"
                   <> "\tTimestamp: " <> timestamp <> "-->"
               finalPost = T.replace "%%TIMESTAMP%%" (T.pack info) postWithMetadata

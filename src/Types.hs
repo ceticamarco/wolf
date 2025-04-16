@@ -27,8 +27,8 @@ data Element = Bold [Element]
              | LItem [Element]
              | OrderedList [Element]
              | UnorderedList [Element]
-             | TableHeader [Value]
-             | TableRow [Value]
+             | TableHeader [Element]
+             | TableRow [Element]
              | Table Element [Element]
              | Text Value
              deriving (Eq, Show)
