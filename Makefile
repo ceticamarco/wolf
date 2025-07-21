@@ -8,7 +8,7 @@ DEBUG_CFLAGS = -Wall -Wextra -Werror -pedantic-errors -fstack-protector-strong \
 		 -Wwrite-strings -std=c99 -g
 CFLAGS = -Wall -Wextra -Werror -pedantic-errors -Wwrite-strings -std=c99 -O3
 
-BUILD_FLAGS = -DVERSION=\"0.0.2\"
+BUILD_FLAGS = -DVERSION=\"0.0.3\"
 
 build: $(TARGET)
 debug: $(DEBUG_TARGET)

@@ -61,13 +61,13 @@ void helper(const char *name) {
            "--no-timestamp            | Disable timestamp from watchdog output\n"
            "-v, --version             | Show program version\n"
            "-h, --help                | Show this helper\n\n"
-           "General help with the software: https://git.marcocetica.com/marco/wolf\n"
+           "Project homepage: https://github.com/ceticamarco/wolf\n"
            "Report bugs to: Marco Cetica(<email@marcocetica.com>)\n", name);
 }
 
 void version() {
     printf("Wolf (v%s) - Configurable file watchdog for Linux platform.\n"
-           "Copyright (c) 2024 Marco Cetica\n"
+           "Copyright (c) 2024, 2025 Marco Cetica\n"
            "License GPLv3+: GNU GPL version 3 or later\n\n"
            "Project homepage: <https://git.marcocetica.com/marco/wolf>.\n"
            "Email bug reports to: <email@marcocetica.com>.\n", VERSION);
@@ -300,13 +300,6 @@ static void get_timestamp(uint8_t *timestamp, const ssize_t timestamp_len) {
 }
 
 static void exec_command(const char *cmd) {
-    // Ignore SIGCHLD signals.
-    // This allows us to avoid blocking the parent process until the child completes
-    // its execution; furthermore, it allows us to prevent the creation of zombie processes
-    // by delegating the cleanup process to the kernel. By doing so, we lose the ability 
-    // to check the return status of the child process.
-    signal(SIGCHLD, SIG_IGN);
-
     // Execute command in a new process
     pid_t pid = fork();
     
@@ -333,6 +326,25 @@ static void exec_command(const char *cmd) {
         }
         free(argv);
         exit(EXIT_FAILURE);
+    } else { // Parent process
+        // Block until child exits
+        int status;
+        pid_t wpid = waitpid(pid, &status, 0);
+
+        if (wpid == -1) {
+            perror("waitpid");
+            exit(EXIT_FAILURE);
+        }
+
+        // Log when child process exited(normally) with an error
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+            printf("[Wolf] - Child process exited with status %d\n", WEXITSTATUS(status));
+        }
+
+        // Log when child process was terminated by a signal
+        if (WIFSIGNALED(status)) {
+            printf("[Wolf] - Child process wass terminated by signal %d\n", WTERMSIG(status));
+        }
     }
 }
 
